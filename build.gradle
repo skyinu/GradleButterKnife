@@ -26,13 +26,10 @@ allprojects {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
-Properties properties = new Properties()
-properties.load(project.rootProject.file('local.properties').newDataInputStream())
 
 ext{
     compileSdkVersion = 26
     buildToolsVersion = "26.0.2"
     minSdkVersion = 14
     targetSdkVersion = 26
-    localMaven = properties.get("localMaven.dir")
 }
