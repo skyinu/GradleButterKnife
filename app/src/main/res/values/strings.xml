@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">GradleButterKnife</string>
+    <string name="app_test_string">It is an injected string </string>
+    <integer name="app_test_interger">1024102</integer>
+    <bool name="app_test_bool">true</bool>
+    <color name="app_test_color">#f0f</color>
+    <dimen name="app_test_dimen">30dp</dimen>
 </resources>

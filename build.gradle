@@ -8,6 +8,7 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.0.1'
+        classpath 'com.novoda:bintray-release:0.8.0'
         
 
         // NOTE: Do not place your application dependencies here; they belong
@@ -25,10 +26,13 @@ allprojects {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
 
 ext{
     compileSdkVersion = 26
     buildToolsVersion = "26.0.2"
     minSdkVersion = 14
     targetSdkVersion = 26
+    localMaven = properties.get("localMaven.dir")
 }

@@ -1,0 +1,9 @@
+apply plugin: 'com.novoda.bintray-release'
+publish {
+    userOrg = 'skyinu'
+    groupId = 'com.skyinu'
+    artifactId = 'gradlebutterknife-plugin'
+    publishVersion = '0.0.1'
+    desc = 'gradlebutterknife inject gradle plugin'
+    website = "https://github.com/skyinu/GradleButterKnife"
+}

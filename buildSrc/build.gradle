@@ -1,6 +1,10 @@
 apply plugin: 'groovy'
+
 buildscript {
     repositories {
+        maven {
+            url 'https://dl.bintray.com/skyinu/maven'
+        }
         mavenCentral()
         jcenter()
         google()
@@ -8,11 +12,15 @@ buildscript {
 
     dependencies {
         classpath 'com.android.tools.build:gradle:3.0.1'
+        classpath 'com.novoda:bintray-release:0.8.0'
     }
 }
 
 allprojects {
     repositories {
+        maven {
+            url 'https://dl.bintray.com/skyinu/maven'
+        }
         mavenCentral()
         jcenter()
         google()
@@ -24,6 +32,12 @@ dependencies {
     implementation localGroovy()
     implementation 'com.android.tools.build:gradle:3.0.1'
     implementation 'org.javassist:javassist:3.20.0-GA'
+    compileOnly 'com.google.android:android:4.1.1.4'
+    implementation 'com.skyinu:gradlebutterknife-annotations:0.0.2'
 }
 
-
+try{
+    apply from: "${project.projectDir}${File.separator}publish.gradle"
+}catch(e){
+    println(e)
+}
