@@ -32,7 +32,7 @@ public class ViewInjector {
     }
 
     def injectClass(CtClass injectClass, String classPath) {
-        startInject()
+        startInject(injectClass)
         injectClass.declaredFields.each {
             CtField ctField = it
             ctField.annotations.each {
@@ -158,9 +158,12 @@ public class ViewInjector {
         injectMethod += statements
     }
 
-    def startInject() {
+    def startInject(CtClass injectClass) {
         injectMethod = "public void ${ConstantList.NAME_INJECT_METHOD}" +
                 "(android.view.View ${ConstantList.VIEW_SOURCE}){\n"
+        if(ClassUtils.containSpecficInterface(injectClass.getSuperclass(), injectInterface)){
+            injectMethod += "super.${ConstantList.NAME_INJECT_METHOD}(${ConstantList.VIEW_SOURCE});\n"
+        }
         injectMethod += "${ConstantList.NAME_CLASS_CONTEXT} ${ConstantList.NAME_CONTEXT_FIELD}" +
                 " = ${ConstantList.VIEW_SOURCE}.getContext();\n"
         injectMethod += "${ConstantList.NAME_CLASS_RESOURCES} ${ConstantList.NAME_RESOURCE_FIELD}" +
@@ -172,7 +175,6 @@ public class ViewInjector {
         if (injectClass.isFrozen()) {
             injectClass.defrost()
         }
-        injectClass.addInterface(injectInterface)
         CtMethod injectMethod = CtNewMethod.make(injectMethod, injectClass)
         injectClass.addMethod(injectMethod)
         injectClass.writeFile(classPath)

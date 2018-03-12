@@ -9,10 +9,10 @@ import android.support.annotation.UiThread;
  */
 
 public class GradleButterKnife {
-    @UiThread
-    public static void bind(@NonNull Activity source) {
-        Injectable injectable = (Injectable) source;
-        injectable.inject(source.getWindow().getDecorView());
+  @UiThread
+  public static void bind(@NonNull Activity source) {
+    Injectable injectable = (Injectable) source;
+    injectable.inject(source.getWindow().getDecorView());
+  }
 
-    }
 }

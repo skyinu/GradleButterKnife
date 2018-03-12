@@ -1,4 +1,4 @@
-package com.skyinu.gradlebutterknife.plugin;
+package com.skyinu.gradlebutterknife.plugin
 
 /**
  * Created by chen on 2018/3/9.

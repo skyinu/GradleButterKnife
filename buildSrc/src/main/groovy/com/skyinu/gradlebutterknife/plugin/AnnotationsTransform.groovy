@@ -7,6 +7,7 @@ import com.android.build.api.transform.TransformInvocation
 import com.android.build.api.transform.TransformOutputProvider
 import com.android.build.gradle.LibraryPlugin
 import com.skyinu.annotations.BindView
+import com.skyinu.gradlebutterknife.plugin.model.BindClassModel
 import javassist.ClassPath
 import javassist.ClassPool
 import javassist.CtClass
@@ -16,7 +17,6 @@ import com.android.build.gradle.internal.pipeline.TransformManager
 import com.android.build.api.transform.Format
 import org.apache.commons.io.FileUtils
 import org.gradle.api.tasks.compile.JavaCompile
-import org.gradle.internal.Pair
 
 
 /**
@@ -28,11 +28,12 @@ public class AnnotationsTransform extends Transform {
     ClassPool classPool = ClassPool.getDefault()
     List<String> classPathList
     def collector = new StringIdCollector(project)
-    Set<Pair<CtClass, String>> injectList = new HashSet<>()
+    Queue<BindClassModel> injectClassQueue
     ViewInjector injector
 
     AnnotationsTransform(Project project) {
         this.project = project
+        injectClassQueue = new PriorityQueue<>(new BindClassModel.BindClassModelComparator())
     }
 
     @Override
@@ -94,8 +95,11 @@ public class AnnotationsTransform extends Transform {
         CtClass injectInterface = classPool.get(ConstantList.NAME_FLAG_INTERFACE)
         ViewInjector.project = project
         injector = new ViewInjector(injectInterface, collector.idStringMap)
-        injectList.each {
-            inject(it.left, it.right)
+        injectClassQueue.each {
+            it.injectClass.addInterface(injectInterface)
+        }
+        injectClassQueue.each {
+            inject(it.injectClass, it.classFilePath)
         }
         classPaths.each {
             classPool.removeClassPath(it)
@@ -124,12 +128,17 @@ public class AnnotationsTransform extends Transform {
                 collector.collectIdStringMapInR(ctClass)
                 return
             }
-            ctClass.getDeclaredFields().each {
-                it.getAvailableAnnotations().each {
-                    if (it instanceof BindView) {
-                        injectList.add(new Pair<>(ctClass, input.absolutePath))
-                    }
+            ctClass.getDeclaredFields().find {
+              def result = it.getAvailableAnnotations().find {
+                if (it instanceof BindView) {
+                  BindClassModel model = new BindClassModel(ctClass, input.absolutePath)
+                  injectClassQueue.add(model)
+                  injectClassQueue.contains()
+                  return true
                 }
+                return false
+              }
+              return result != null
             }
         }
     }

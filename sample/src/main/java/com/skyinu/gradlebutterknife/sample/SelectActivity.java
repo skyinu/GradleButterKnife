@@ -20,6 +20,8 @@ public class SelectActivity extends AppCompatActivity {
   private Button button1;
   @BindView(R2.id.button2)
   private Button button2;
+  @BindView(R2.id.button3)
+  private Button button3;
   @Override protected void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_select_layout);
@@ -34,6 +36,12 @@ public class SelectActivity extends AppCompatActivity {
     button2.setOnClickListener(new View.OnClickListener() {
       @Override public void onClick(View v) {
         Intent intent = new Intent(SelectActivity.this, SampleModuleActivity.class);
+        startActivity(intent);
+      }
+    });
+    button3.setOnClickListener(new View.OnClickListener() {
+      @Override public void onClick(View v) {
+        Intent intent = new Intent(SelectActivity.this, ChildActivity.class);
         startActivity(intent);
       }
     });
