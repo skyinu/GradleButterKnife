@@ -1,6 +1,6 @@
 package com.skyinu.gradlebutterknife.plugin.model;
 
-import com.skyinu.gradlebutterknife.plugin.ClassUtils;
+import com.skyinu.gradlebutterknife.plugin.util.ClassUtils;
 import java.util.Comparator;
 import javassist.CtClass;
 

@@ -2,7 +2,7 @@ package com.skyinu.gradlebutterknife.plugin
 
 import com.android.build.gradle.api.BaseVariant
 import com.android.build.gradle.api.BaseVariantOutput
-import org.apache.commons.io.FileUtils
+import com.skyinu.gradlebutterknife.plugin.util.Log
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import com.android.build.gradle.AppPlugin
@@ -18,6 +18,7 @@ class GradleButterKnifePlugin implements Plugin<Project> {
       throw new IllegalStateException('plugin can only be applied to android projects')
     }
     this.projectContext = project
+    Log.init(project)
     registerResourceProcess(project)
     project.android.registerTransform(new AnnotationsTransform(project))
   }

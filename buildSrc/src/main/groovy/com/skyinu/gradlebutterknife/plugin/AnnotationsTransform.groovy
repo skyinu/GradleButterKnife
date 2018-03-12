@@ -27,7 +27,7 @@ public class AnnotationsTransform extends Transform {
     Project project
     ClassPool classPool = ClassPool.getDefault()
     List<String> classPathList
-    def collector = new StringIdCollector(project)
+    def collector = new StringIdCollector()
     Queue<BindClassModel> injectClassQueue
     ViewInjector injector
 
@@ -93,7 +93,6 @@ public class AnnotationsTransform extends Transform {
         }
 
         CtClass injectInterface = classPool.get(ConstantList.NAME_FLAG_INTERFACE)
-        ViewInjector.project = project
         injector = new ViewInjector(injectInterface, collector.idStringMap)
         injectClassQueue.each {
             it.injectClass.addInterface(injectInterface)

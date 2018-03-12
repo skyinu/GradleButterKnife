@@ -8,11 +8,11 @@ import com.skyinu.annotations.BindDimen
 import com.skyinu.annotations.BindInt
 import com.skyinu.annotations.BindString
 import com.skyinu.annotations.BindView
+import com.skyinu.gradlebutterknife.plugin.util.ClassUtils
 import javassist.CtClass
 import javassist.CtField
 import javassist.CtMethod
 import javassist.CtNewMethod
-import org.gradle.api.Project
 
 /**
  * Created by chen on 2018/3/9.
@@ -23,7 +23,6 @@ public class ViewInjector {
     def injectMethod
     CtClass injectInterface
     Map<Integer, String> idStringMap
-    static Project project
 
     ViewInjector(CtClass injectInterface, Map<Integer, String> idStringMap) {
         this.injectInterface = injectInterface

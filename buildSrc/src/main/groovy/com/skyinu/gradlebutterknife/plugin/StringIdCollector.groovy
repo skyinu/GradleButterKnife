@@ -1,18 +1,15 @@
 package com.skyinu.gradlebutterknife.plugin
 
 import javassist.CtClass
-import org.gradle.api.Project
 
 /**
  * Created by chen on 2018/3/9.
  */
 
 public class StringIdCollector {
-    Project project
     Map<Integer, String> idStringMap
 
-    StringIdCollector(Project project) {
-        this.project = project
+    StringIdCollector() {
         idStringMap = new HashMap<>()
     }
 

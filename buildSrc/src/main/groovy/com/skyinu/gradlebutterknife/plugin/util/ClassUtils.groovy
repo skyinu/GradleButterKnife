@@ -1,4 +1,4 @@
-package com.skyinu.gradlebutterknife.plugin
+package com.skyinu.gradlebutterknife.plugin.util
 
 import javassist.CtClass;
 
