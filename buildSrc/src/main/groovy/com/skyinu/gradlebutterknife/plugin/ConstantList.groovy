@@ -5,7 +5,7 @@ package com.skyinu.gradlebutterknife.plugin;
  */
 
 public class ConstantList {
-    static def MATCHER_R = ".+R\\\$.*|.+R"
+    static def MATCHER_R = ".+R2\\\$.*|.+R2"
     static def VIEW_SOURCE = "source"
     static def NAME_INJECT_METHOD = "inject"
     static def NAME_FLAG_INTERFACE = "com.skyinu.gradlebutterknife.Injectable"

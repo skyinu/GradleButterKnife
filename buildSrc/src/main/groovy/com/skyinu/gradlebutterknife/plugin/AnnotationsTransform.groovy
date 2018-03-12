@@ -70,7 +70,6 @@ public class AnnotationsTransform extends Transform {
         classPathList.each {
             try {
                 classPaths.add(classPool.insertClassPath(it))
-                project.logger.error("annotation is " + it)
             } catch (Exception e) {
             }
         }
@@ -95,8 +94,8 @@ public class AnnotationsTransform extends Transform {
         }
 
         CtClass injectInterface = classPool.get(ConstantList.NAME_FLAG_INTERFACE)
+        ViewInjector.project = project
         injector = new ViewInjector(injectInterface, collector.idStringMap)
-        injector.project = project
         injectList.each {
             inject(it.left, it.right)
         }
@@ -138,10 +137,13 @@ public class AnnotationsTransform extends Transform {
 
     def handleClassPath() {
         classPathList = new ArrayList<>()
-        if (!project.plugins.hasPlugin(LibraryPlugin)) {
-            return
+        def variants
+        if (project.plugins.hasPlugin(LibraryPlugin)) {
+            variants = project.android.libraryVariants
+        } else {
+            variants = project.android.applicationVariants
         }
-        project.android.libraryVariants.all { variant ->
+        variants.all { variant ->
             JavaCompile javaCompile = variant.getJavaCompiler()
             javaCompile.classpath.each {
                 classPathList.add(it.path)

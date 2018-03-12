@@ -20,23 +20,23 @@ import com.skyinu.annotations.BindView;
 
 public class MainActivity extends AppCompatActivity {
 
-    @BindView(R.id.text)
+    @BindView(R2.id.text)
     private TextView textView;
-    @BindString(R.string.app_test_string)
+    @BindString(R2.string.app_test_string)
     private String injectString;
-    @BindInt(R.integer.app_test_interger)
+    @BindInt(R2.integer.app_test_interger)
     private int injectInt;
-    @BindBool(R.bool.app_test_bool)
+    @BindBool(R2.bool.app_test_bool)
     private boolean injectBool;
-    @BindColor(R.color.app_test_color)
+    @BindColor(R2.color.app_test_color)
     private int injectColor;
-    @BindDimen(R.dimen.app_test_dimen)
+    @BindDimen(R2.dimen.app_test_dimen)
     private float injectDimen;
-    @BindBitmap(R.mipmap.ic_launcher)
+    @BindBitmap(R2.drawable.android_build_process)
     private Drawable injectBitmap;
-    @BindAnim(R.anim.app_test_anim)
+    @BindAnim(R2.anim.app_test_anim)
     private Animation injectAnimation;
-    @BindView(R.id.image)
+    @BindView(R2.id.image)
     private ImageView imageView;
 
 

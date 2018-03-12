@@ -23,11 +23,12 @@ public class ViewInjector {
     def injectMethod
     CtClass injectInterface
     Map<Integer, String> idStringMap
-    Project project
+    static Project project
 
     ViewInjector(CtClass injectInterface, Map<Integer, String> idStringMap) {
         this.injectInterface = injectInterface
         this.idStringMap = idStringMap
+
     }
 
     def injectClass(CtClass injectClass, String classPath) {
