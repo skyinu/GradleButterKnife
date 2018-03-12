@@ -21,7 +21,7 @@ public class StringIdCollector {
         if (idFields.size() < 1) {
             return
         }
-        def prefix = rClass.name.replace("\$", ".")
+        def prefix = rClass.name.replace("\$", ".").replace(".R2", ".R")
         idFields.each {
             def fieldName = it.name
             def value = it.constantValue

@@ -1,11 +1,9 @@
-package com.skyinu.gradlebutterknife;
+package com.skyinu.gradlebutterknife.sample;
 
-import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -17,6 +15,7 @@ import com.skyinu.annotations.BindDimen;
 import com.skyinu.annotations.BindInt;
 import com.skyinu.annotations.BindString;
 import com.skyinu.annotations.BindView;
+import com.skyinu.gradlebutterknife.GradleButterKnife;
 
 public class MainActivity extends AppCompatActivity {
 

@@ -33,9 +33,6 @@ public class AnnotationsTransform extends Transform {
 
     AnnotationsTransform(Project project) {
         this.project = project
-        project.afterEvaluate {
-            handleClassPath()
-        }
     }
 
     @Override
@@ -65,6 +62,7 @@ public class AnnotationsTransform extends Transform {
     void transform(TransformInvocation transformInvocation)
             throws TransformException, InterruptedException, IOException {
         super.transform(transformInvocation)
+        collectClassPath()
         classPool.insertClassPath(project.android.bootClasspath[0].toString())
         List<ClassPath> classPaths = new ArrayList<>()
         classPathList.each {
@@ -124,6 +122,7 @@ public class AnnotationsTransform extends Transform {
 
             if ((className) ==~ ConstantList.MATCHER_R) {
                 collector.collectIdStringMapInR(ctClass)
+                return
             }
             ctClass.getDeclaredFields().each {
                 it.getAvailableAnnotations().each {
@@ -135,7 +134,7 @@ public class AnnotationsTransform extends Transform {
         }
     }
 
-    def handleClassPath() {
+    def collectClassPath() {
         classPathList = new ArrayList<>()
         def variants
         if (project.plugins.hasPlugin(LibraryPlugin)) {

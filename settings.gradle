@@ -1,1 +1,1 @@
-include ':app', ':gradlebutterknife-annotations', ':gradlebutterknife', ':samplemodule'
+include ':gradlebutterknife-annotations', ':gradlebutterknife', ':samplemodule', ':sample'
