@@ -9,6 +9,7 @@ import android.widget.Button;
 import com.skyinu.annotations.BindView;
 import com.skyinu.gradlebutterknife.GradleButterKnife;
 import com.skyinu.samplemodule.SampleModuleActivity;
+import com.skyinu.samplemodule.SimpleListActivity;
 
 /**
  * Created by chen on 2018/3/12.
@@ -22,6 +23,8 @@ public class SelectActivity extends AppCompatActivity {
   private Button button2;
   @BindView(R2.id.button3)
   private Button button3;
+  @BindView(R2.id.button4)
+  private Button button4;
   @Override protected void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_select_layout);
@@ -42,6 +45,12 @@ public class SelectActivity extends AppCompatActivity {
     button3.setOnClickListener(new View.OnClickListener() {
       @Override public void onClick(View v) {
         Intent intent = new Intent(SelectActivity.this, ChildActivity.class);
+        startActivity(intent);
+      }
+    });
+    button4.setOnClickListener(new View.OnClickListener() {
+      @Override public void onClick(View v) {
+        Intent intent = new Intent(SelectActivity.this, SimpleListActivity.class);
         startActivity(intent);
       }
     });

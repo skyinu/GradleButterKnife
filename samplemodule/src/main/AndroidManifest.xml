@@ -2,5 +2,6 @@
     package="com.skyinu.samplemodule">
   <application>
     <activity android:name=".SampleModuleActivity"/>
+    <activity android:name=".SimpleListActivity"/>
   </application>
 </manifest>
