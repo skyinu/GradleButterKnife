@@ -1,6 +1,7 @@
 package com.skyinu.samplemodule;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +13,7 @@ import com.skyinu.gradlebutterknife.GradleButterKnife;
 public class SimpleAdapter extends BaseAdapter {
   private static final String[] CONTENTS = "The quick brown fox jumps over the lazy dog".split(" ");
 
+  @NonNull
   private final LayoutInflater inflater;
 
   public SimpleAdapter(Context context) {
