@@ -2,19 +2,13 @@ package com.skyinu.gradlebutterknife.plugin
 
 import com.skyinu.annotations.OnClick
 import com.skyinu.annotations.OnLongClick
+import com.skyinu.gradlebutterknife.plugin.model.MethodBindListenClass
 import com.skyinu.gradlebutterknife.plugin.util.BindUtils
-import com.skyinu.gradlebutterknife.plugin.util.ClassUtils
 import javassist.ClassPool
 import javassist.CtClass
-import javassist.CtConstructor
-import javassist.CtField
 import javassist.CtMethod
-import javassist.CtNewConstructor
-import javassist.CtNewMethod
-import javassist.Modifier
 
 import java.lang.annotation.Annotation
-import com.skyinu.gradlebutterknife.plugin.util.Log
 
 /**
  * Created by chen on 2018/3/13.*/
@@ -53,70 +47,22 @@ public class MethodBinder {
       }
       def methodCall = "${ConstantList.NAME_FIELD_OUTER_CLASS}.$methodName"
       if (injectMethod.parameterTypes.length > 0) {
-        methodCall += "((${injectMethod.parameterTypes[0].name})view);\n"
+        methodCall += "((${injectMethod.parameterTypes[0].name})view);"
       } else {
-        methodCall += "();\n"
+        methodCall += "();"
       }
       if (annotation instanceof OnClick) {
-        def listenStatement = injectIntoInnerClickClass(injectClass, methodCall)
-        statement +=
-            "${ConstantList.NAME_TEMP_VIEW}.setOnClickListener(new ${listenStatement}(this));\n"
+        String newClassName = "${ConstantList.NAME_INJECT_INNER_CLASS}${innerClassClickCount}"
+        innerClassClickCount++
+        statement += MethodBindListenClass.OnClick.buildCodeBlock(injectClass, classPath,
+            injectMethod, newClassName, methodCall)
       } else if (annotation instanceof OnLongClick) {
-        if(ClassUtils.isVoidType(injectMethod.returnType)){
-          methodCall += "return false;\n"
-        }
-        else{
-          methodCall = "return $methodCall"
-        }
-        def listenStatement = injectIntoLongClickClass(injectClass,  methodCall)
-        statement +=
-            "${ConstantList.NAME_TEMP_VIEW}.setOnLongClickListener(new ${listenStatement}(this));\n"
+        String newClassName = "${ConstantList.NAME_INJECT_LONG_CLICK_CLASS}${innerClassLongClickCount}"
+        innerClassLongClickCount++
+        statement += MethodBindListenClass.OnLongClick.buildCodeBlock(injectClass,
+            classPath, injectMethod, newClassName, methodCall)
       }
     }
     return statement
-  }
-
-  String buildConstructureBody(String methodName, String outType) {
-    return ("$methodName($outType ${ConstantList.NAME_FIELD_OUTER_CLASS}){\n" + "this.${ConstantList.NAME_FIELD_OUTER_CLASS} = ${ConstantList.NAME_FIELD_OUTER_CLASS};\n" +
-        "}")
-  }
-
-
-  String injectIntoLongClickClass(CtClass ctClass, String methodCall){
-    def innerClickClassName = "${ctClass.name}\$${ConstantList.NAME_INJECT_LONG_CLICK_CLASS}${innerClassLongClickCount}"
-    CtClass innerClass = classPool.makeClass(innerClickClassName)
-    CtField outClassField = new CtField(ctClass, ConstantList.NAME_FIELD_OUTER_CLASS, innerClass)
-    outClassField.setModifiers(Modifier.PRIVATE)
-    innerClass.addField(outClassField)
-    def constructureBody = buildConstructureBody(
-        "${ConstantList.NAME_INJECT_LONG_CLICK_CLASS}${innerClassClickCount}", ctClass.name)
-    CtConstructor constructure = CtNewConstructor.make(constructureBody, innerClass)
-    innerClass.addConstructor(constructure)
-    innerClass.addInterface(classPool.get(ConstantList.NAME_ONLONGCLICK_INTERFACE))
-    def onClickBody = " public boolean onLongClick(android.view.View view){\n$methodCall\n}"
-    CtMethod ctMethod = CtNewMethod.make(onClickBody, innerClass)
-    innerClass.addMethod(ctMethod)
-    innerClass.writeFile(classPath)
-    innerClassLongClickCount++
-    return innerClickClassName
-  }
-
-  String injectIntoInnerClickClass(CtClass ctClass, String methodCall) {
-    def innerClickClassName = "${ctClass.name}\$${ConstantList.NAME_INJECT_INNER_CLASS}${innerClassClickCount}"
-    CtClass innerClass = classPool.makeClass(innerClickClassName)
-    CtField outClassField = new CtField(ctClass, ConstantList.NAME_FIELD_OUTER_CLASS, innerClass)
-    outClassField.setModifiers(Modifier.PRIVATE)
-    innerClass.addField(outClassField)
-    def constructureBody = buildConstructureBody(
-        "${ConstantList.NAME_INJECT_INNER_CLASS}${innerClassClickCount}", ctClass.name)
-    CtConstructor constructure = CtNewConstructor.make(constructureBody, innerClass)
-    innerClass.addConstructor(constructure)
-    innerClass.addInterface(classPool.get(ConstantList.NAME_ONCLICK_INTERFACE))
-    def onClickBody = " public void onClick(android.view.View view){\n$methodCall\n}"
-    CtMethod injectMethod = CtNewMethod.make(onClickBody, innerClass)
-    innerClass.addMethod(injectMethod)
-    innerClass.writeFile(classPath)
-    innerClassClickCount++
-    return innerClickClassName
   }
 }

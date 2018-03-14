@@ -51,7 +51,8 @@ public class ViewInjector {
     injectClass.declaredMethods.each {
       CtMethod ctMethod = it
       ctMethod.annotations.each {
-        injectMethod +=  methodBinder.buildBindMethodStatement(injectClass, ctMethod, it as Annotation)
+        injectMethod +=
+            methodBinder.buildBindMethodStatement(injectClass, ctMethod, it as Annotation)
       }
     }
     endInject(injectClass, classPath)
@@ -77,12 +78,11 @@ public class ViewInjector {
     if (injectClass.isFrozen()) {
       injectClass.defrost()
     }
-    CtMethod injectMethod = CtNewMethod.make(injectMethod, injectClass)
-    try {
-      injectClass.addMethod(injectMethod)
-    }catch (e){
-      e.printStackTrace()
+    CtMethod ctMethod = CtNewMethod.make(injectMethod, injectClass)
+    if (ClassUtils.containSpecficMethod(injectClass, ctMethod)) {
+      injectClass.removeMethod(ctMethod)
     }
+    injectClass.addMethod(ctMethod)
     injectClass.writeFile(classPath)
     injectClass.detach()
   }
