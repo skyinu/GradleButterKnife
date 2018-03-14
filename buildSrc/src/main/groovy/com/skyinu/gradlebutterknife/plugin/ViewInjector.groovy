@@ -1,8 +1,9 @@
 package com.skyinu.gradlebutterknife.plugin
 
-import com.skyinu.gradlebutterknife.plugin.util.BindUtils
+import com.skyinu.annotations.BindView
 import com.skyinu.gradlebutterknife.plugin.util.ClassUtils
 import com.skyinu.gradlebutterknife.plugin.util.Log
+import javassist.ClassPool
 import javassist.CtClass
 import javassist.CtField
 import javassist.CtMethod
@@ -11,66 +12,78 @@ import javassist.CtNewMethod
 import java.lang.annotation.Annotation
 
 /**
- * Created by chen on 2018/3/9.
- */
+ * Created by chen on 2018/3/9.*/
 
 public class ViewInjector {
 
-    def injectMethod
-    CtClass injectInterface
-    Map<Integer, String> idStringMap
+  ClassPool classPool
+  def injectMethod
+  CtClass injectInterface
+  CtClass onClickInterface
+  Map<Integer, String> idStringMap
+  Map<Integer, String> idFieldMap
+  FieldBinder fieldBinder
+  MethodBinder methodBinder
 
-    ViewInjector(CtClass injectInterface, Map<Integer, String> idStringMap) {
-        this.injectInterface = injectInterface
-        this.idStringMap = idStringMap
+  ViewInjector(ClassPool classPool, Map<Integer, String> idStringMap) {
+    this.classPool = classPool
+    this.injectInterface = classPool.get(ConstantList.NAME_FLAG_INTERFACE)
+    this.onClickInterface = classPool.get(ConstantList.NAME_ONCLICK_INTERFACE)
+    this.idStringMap = idStringMap
+    fieldBinder = new FieldBinder(idStringMap)
+    idFieldMap = new HashMap<>()
+  }
 
-    }
-
-    def injectClass(CtClass injectClass, String classPath) {
-        startInject(injectClass)
-        injectClass.declaredFields.each {
-            CtField ctField = it
-            ctField.annotations.each {
-                def statement = BindUtils.buildBindFieldStatement(ctField, it as Annotation, idStringMap)
-                Log.error(statement)
-                injectMethod += statement
-            }
+  def injectClass(CtClass injectClass, String classPath) {
+    startInject(injectClass)
+    injectClass.declaredFields.each {
+      CtField ctField = it
+      ctField.annotations.each {
+        if (it instanceof BindView) {
+          def value = it.value()
+          def fieldName = ctField.name
+          idFieldMap.put(value, fieldName)
         }
-
-        injectClass.declaredMethods.each {
-            CtMethod ctMethod = it
-            ctMethod.annotations.each {
-                selectProcessor(ctField, it)
-            }
-        }
-        endInject(injectClass, classPath)
+        injectMethod += fieldBinder.buildBindFieldStatement(ctField, it as Annotation)
+      }
     }
-
-    def selectProcessor(CtField injectField, Object annotation) {
-
+    methodBinder = new MethodBinder(classPool, classPath, idStringMap, idFieldMap)
+    injectClass.declaredMethods.each {
+      CtMethod ctMethod = it
+      ctMethod.annotations.each {
+        injectMethod +=  methodBinder.buildBindMethodStatement(injectClass, ctMethod, it as Annotation)
+      }
     }
+    endInject(injectClass, classPath)
+  }
 
-
-    def startInject(CtClass injectClass) {
-        injectMethod = "public void ${ConstantList.NAME_INJECT_METHOD}" +
-                "(android.view.View ${ConstantList.VIEW_SOURCE}){\n"
-        if(ClassUtils.containSpecficInterface(injectClass.getSuperclass(), injectInterface)){
-            injectMethod += "super.${ConstantList.NAME_INJECT_METHOD}(${ConstantList.VIEW_SOURCE});\n"
-        }
-        injectMethod += "${ConstantList.NAME_CLASS_CONTEXT} ${ConstantList.NAME_CONTEXT_FIELD}" +
-                " = ${ConstantList.VIEW_SOURCE}.getContext();\n"
-        injectMethod += "${ConstantList.NAME_CLASS_RESOURCES} ${ConstantList.NAME_RESOURCE_FIELD}" +
-                " = ${ConstantList.NAME_CONTEXT_FIELD}.getResources();\n"
+  def startInject(CtClass injectClass) {
+    injectMethod =
+        "public void ${ConstantList.NAME_INJECT_METHOD}" + "(android.view.View ${ConstantList.VIEW_SOURCE}){\n"
+    if (ClassUtils.containSpecficInterface(injectClass.getSuperclass(), injectInterface)) {
+      injectMethod += "super.${ConstantList.NAME_INJECT_METHOD}(${ConstantList.VIEW_SOURCE});\n"
     }
+    injectMethod +=
+        "${ConstantList.NAME_CLASS_CONTEXT} ${ConstantList.NAME_CONTEXT_FIELD}" + " = ${ConstantList.VIEW_SOURCE}.getContext();\n"
+    injectMethod +=
+        "${ConstantList.NAME_CLASS_RESOURCES} ${ConstantList.NAME_RESOURCE_FIELD}" + " = ${ConstantList.NAME_CONTEXT_FIELD}.getResources();\n"
+    injectMethod += "android.view.View ${ConstantList.NAME_TEMP_VIEW};\n"
+    idFieldMap.clear()
+    injectClass.addInterface(injectInterface)
+  }
 
-    def endInject(CtClass injectClass, String classPath) {
-        injectMethod += "}"
-        if (injectClass.isFrozen()) {
-            injectClass.defrost()
-        }
-        CtMethod injectMethod = CtNewMethod.make(injectMethod, injectClass)
-        injectClass.addMethod(injectMethod)
-        injectClass.writeFile(classPath)
-        injectClass.detach()
+  def endInject(CtClass injectClass, String classPath) {
+    injectMethod += "}"
+    if (injectClass.isFrozen()) {
+      injectClass.defrost()
     }
+    CtMethod injectMethod = CtNewMethod.make(injectMethod, injectClass)
+    try {
+      injectClass.addMethod(injectMethod)
+    }catch (e){
+      e.printStackTrace()
+    }
+    injectClass.writeFile(classPath)
+    injectClass.detach()
+  }
 }

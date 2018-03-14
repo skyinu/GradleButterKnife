@@ -27,4 +27,8 @@ public class ClassUtils {
   static boolean isPrimitive(String signature) {
     return SIGNATURE_PRIMITIVE.contains(signature)
   }
+
+  static boolean isVoidType(CtClass ctClass) {
+    return ctClass == CtClass.voidType
+  }
 }

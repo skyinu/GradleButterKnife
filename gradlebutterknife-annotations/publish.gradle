@@ -3,7 +3,7 @@ publish {
     userOrg = 'skyinu'
     groupId = 'com.skyinu'
     artifactId = 'gradlebutterknife-annotations'
-    publishVersion = '0.0.2'
+    publishVersion = '0.0.3'
     desc = 'gradlebutterknife annotations definition'
     website = "https://github.com/skyinu/GradleButterKnife"
 }

@@ -90,11 +90,7 @@ public class AnnotationsTransform extends Transform {
       }
     }
 
-    CtClass injectInterface = classPool.get(ConstantList.NAME_FLAG_INTERFACE)
-    injector = new ViewInjector(injectInterface, collector.idStringMap)
-    injectClassQueue.each {
-      it.injectClass.addInterface(injectInterface)
-    }
+    injector = new ViewInjector(classPool, collector.idStringMap)
     injectClassQueue.each {
       inject(it.injectClass, it.classFilePath)
     }
