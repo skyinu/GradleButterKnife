@@ -29,6 +29,29 @@ public class MethodBinder {
     this.classPath = classPath
   }
 
+  String buildBindMethodCodeBlock(CtClass injectClass, CtMethod injectMethod,
+                                  Annotation annotation) {
+    def values = annotation.value()
+    def methodName = injectMethod.name
+    def statement = ""
+    values.each {
+      def fieldName = idFieldMap.get(it, null)
+      statement += "${ConstantList.NAME_TEMP_VIEW} = "
+      if (fieldName == null) {
+        statement += "${ConstantList.VIEW_SOURCE}.findViewById(${idStringMap.get(it)});\n"
+      } else {
+        statement += "$fieldName;\n"
+      }
+      if (annotation instanceof OnClick) {
+        statement += MethodBindListenClass.OnClick.buildListenerSetBlock(injectClass)
+      } else if (annotation instanceof OnLongClick) {
+        statement += MethodBindListenClass.OnLongClick.buildListenerSetBlock(injectClass)
+      }
+    }
+    return statement
+  }
+
+
   String buildBindMethodStatement(CtClass injectClass, CtMethod injectMethod,
       Annotation annotation) {
     if (!BindUtils.isAnnotationSupport(annotation)) {

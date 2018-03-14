@@ -72,17 +72,23 @@ public enum MethodBindListenClass {
     }
     injectClass.writeFile(classPath);
     //step 6:set listen class
+    return buildListenerSetBlock(ctClass);
+  }
+
+  public String buildListenerSetBlock(CtClass ctClass){
     StringBuilder setCodeBlock = new StringBuilder("((");
     setCodeBlock.append(aimClassType)
-        .append(")")
-        .append(ConstantList.NAME_TEMP_VIEW)
-        .append(")")
-        .append(".")
-        .append(setMethod)
-        .append("(new")
-        .append(" ")
-        .append(fullName)
-        .append("(this));\n");
+            .append(")")
+            .append(ConstantList.NAME_TEMP_VIEW)
+            .append(")")
+            .append(".")
+            .append(setMethod)
+            .append("(new")
+            .append(" ")
+            .append(ctClass.getName())
+            .append("$")
+            .append(ConstantList.NAME_CLASS_EVENT_DISPATCHER)
+            .append("(this));\n");
     return setCodeBlock.toString();
   }
 

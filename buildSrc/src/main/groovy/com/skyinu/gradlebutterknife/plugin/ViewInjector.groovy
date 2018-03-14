@@ -1,6 +1,7 @@
 package com.skyinu.gradlebutterknife.plugin
 
 import com.skyinu.annotations.BindView
+import com.skyinu.gradlebutterknife.plugin.util.BindUtils
 import com.skyinu.gradlebutterknife.plugin.util.ClassUtils
 import com.skyinu.gradlebutterknife.plugin.util.Log
 import javassist.ClassPool
@@ -8,6 +9,7 @@ import javassist.CtClass
 import javassist.CtField
 import javassist.CtMethod
 import javassist.CtNewMethod
+import org.gradle.api.plugins.quality.CodeNarc
 
 import java.lang.annotation.Annotation
 
@@ -48,14 +50,28 @@ public class ViewInjector {
       }
     }
     methodBinder = new MethodBinder(classPool, classPath, idStringMap, idFieldMap)
+    def hasInjectListen = false
     injectClass.declaredMethods.each {
       CtMethod ctMethod = it
       ctMethod.annotations.each {
+        if (!BindUtils.isA4nnotationSupport(it as Annotation)) {
+          return
+        }
+        if(!hasInjectListen){
+          injectEventClassInstance(injectClass)
+        }
         injectMethod +=
             methodBinder.buildBindMethodStatement(injectClass, ctMethod, it as Annotation)
       }
     }
     endInject(injectClass, classPath)
+  }
+
+  def injectEventClassInstance(CtClass injectClass){
+    def fullName = "${injectClass.name}\$${ConstantList.NAME_CLASS_EVENT_DISPATCHER}"
+    def statement = "$fullName ${ConstantList.NAME_LISTENER_INSTANCE} " +
+            "= new $fullName(${ConstantList.NAME_FIELD_OUTER_CLASS})"
+    injectMethod += statement
   }
 
   def startInject(CtClass injectClass) {
