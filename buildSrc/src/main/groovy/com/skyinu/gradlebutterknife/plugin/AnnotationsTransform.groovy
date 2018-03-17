@@ -6,7 +6,7 @@ import com.android.build.api.transform.TransformException
 import com.android.build.api.transform.TransformInvocation
 import com.android.build.api.transform.TransformOutputProvider
 import com.android.build.gradle.LibraryPlugin
-import com.skyinu.gradlebutterknife.plugin.model.BindClassModel
+import com.skyinu.gradlebutterknife.plugin.model.TargetClassInfo
 import com.skyinu.gradlebutterknife.plugin.util.BindUtils
 import javassist.ClassPath
 import javassist.ClassPool
@@ -26,12 +26,12 @@ public class AnnotationsTransform extends Transform {
   ClassPool classPool = ClassPool.getDefault()
   List<String> classPathList
   def collector = new StringIdCollector()
-  Queue<BindClassModel> injectClassQueue
+  Queue<TargetClassInfo> injectClassQueue
   ViewInjector injector
 
   AnnotationsTransform(Project project) {
     this.project = project
-    injectClassQueue = new PriorityQueue<>(new BindClassModel.BindClassModelComparator())
+    injectClassQueue = new PriorityQueue<>(new TargetClassInfo.BindClassModelComparator())
   }
 
   @Override
@@ -91,7 +91,7 @@ public class AnnotationsTransform extends Transform {
     }
 
     try {
-      injector = new ViewInjector(classPool, collector.idStringMap)
+      injector = new ViewInjector(collector.idStringMap)
       injectClassQueue.each {
         inject(it.injectClass, it.classFilePath)
       }
@@ -126,7 +126,7 @@ public class AnnotationsTransform extends Transform {
         return
       }
       if (BindUtils.shouldBindView(ctClass)) {
-        BindClassModel model = new BindClassModel(ctClass, input.absolutePath)
+        TargetClassInfo model = new TargetClassInfo(ctClass, input.absolutePath)
         injectClassQueue.add(model)
         injectClassQueue.contains()
       }

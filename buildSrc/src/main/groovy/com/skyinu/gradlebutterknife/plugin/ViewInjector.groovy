@@ -1,140 +1,42 @@
 package com.skyinu.gradlebutterknife.plugin
 
-import com.skyinu.annotations.BindView
-import com.skyinu.annotations.OnClick
-import com.skyinu.annotations.OnLongClick
-import com.skyinu.gradlebutterknife.plugin.model.MethodBindListenClass
-import com.skyinu.gradlebutterknife.plugin.model.MethodCallModel
-import com.skyinu.gradlebutterknife.plugin.util.BindUtils
-import com.skyinu.gradlebutterknife.plugin.util.ClassUtils
-import com.skyinu.gradlebutterknife.plugin.util.Log
-import javassist.ClassPool
-import javassist.CtClass
-import javassist.CtConstructor
-import javassist.CtField
-import javassist.CtMethod
-import javassist.CtNewConstructor
-import javassist.CtNewMethod
 
-import java.lang.annotation.Annotation
-import java.lang.reflect.Modifier
+import com.skyinu.gradlebutterknife.plugin.bind.FieldBinder
+import com.skyinu.gradlebutterknife.plugin.bind.MethodBinder
+import com.skyinu.gradlebutterknife.plugin.util.ClassUtils
+import javassist.CtClass
+import javassist.CtMethod
+import javassist.CtNewMethod
 
 /**
  * Created by chen on 2018/3/9.*/
 
 public class ViewInjector {
 
-  ClassPool classPool
   def injectMethod
-  CtClass injectInterface
-  CtClass onClickInterface
   Map<Integer, String> idStringMap
   Map<Integer, String> idFieldMap
   FieldBinder fieldBinder
   MethodBinder methodBinder
 
-  ViewInjector(ClassPool classPool, Map<Integer, String> idStringMap) {
-    this.classPool = classPool
-    this.injectInterface = classPool.get(ConstantList.NAME_FLAG_INTERFACE)
-    this.onClickInterface = classPool.get(ConstantList.NAME_ONCLICK_INTERFACE)
+  ViewInjector(Map<Integer, String> idStringMap) {
     this.idStringMap = idStringMap
     fieldBinder = new FieldBinder(idStringMap)
+    methodBinder = new MethodBinder(idStringMap)
     idFieldMap = new HashMap<>()
   }
 
   def injectClass(CtClass injectClass, String classPath) {
     startInject(injectClass)
-    injectClass.declaredFields.each {
-      CtField ctField = it
-      ctField.annotations.each {
-        if (it instanceof BindView) {
-          def value = it.value()
-          def fieldName = ctField.name
-          idFieldMap.put(value, fieldName)
-        }
-        injectMethod += fieldBinder.buildBindFieldStatement(ctField, it as Annotation)
-      }
-    }
-    methodBinder = new MethodBinder(classPool, classPath, idStringMap, idFieldMap)
-    def methodCallMap = new HashMap<String, List<MethodCallModel>>()
-
-    injectClass.declaredMethods.each {
-      CtMethod ctMethod = it
-      ctMethod.annotations.each {
-        Annotation annotation = it
-        if (!BindUtils.isAnnotationSupport(annotation)) {
-          return
-        }
-        injectMethod += methodBinder.buildSetCodeBlock(injectClass, annotation)
-        def callModelList = methodCallMap.get(annotation.annotationType().name)
-        if (!callModelList) {
-          callModelList = new ArrayList<MethodCallModel>()
-          methodCallMap.put(annotation.annotationType().name, callModelList)
-        }
-        methodBinder.buildMethodCallCodeBlock(callModelList, ctMethod, annotation)
-      }
-    }
-
-    if (!methodCallMap.keySet().empty) {
-      String fullName = "${injectClass.name}_${ConstantList.NAME_CLASS_EVENT_DISPATCHER}"
-      def dispatcherClass = geneate(injectClass, fullName)
-      methodCallMap.keySet().each {
-        processMethodCallModel(dispatcherClass, it, methodCallMap.get(it))
-      }
-      dispatcherClass.writeFile(classPath)
-    }
+    injectMethod = fieldBinder.processBindField(injectClass, injectMethod, idFieldMap)
+    injectMethod = methodBinder.processBindMethod(injectClass, classPath, injectMethod, idFieldMap)
     endInject(injectClass, classPath)
-  }
-
-  CtClass geneate(CtClass injectClass, String fullName){
-    CtClass tmpClass = classPool.makeClass(fullName);
-    CtField outClassField = new CtField(injectClass, ConstantList.NAME_FIELD_OUTER_CLASS, tmpClass);
-    outClassField.setModifiers(Modifier.PRIVATE);
-    tmpClass.addField(outClassField);
-    CtConstructor constructor =
-        CtNewConstructor.make(buildConstructorCodeBlock(ConstantList.NAME_CLASS_EVENT_DISPATCHER, injectClass.getName()),
-            tmpClass);
-    tmpClass.addConstructor(constructor)
-    return tmpClass
-  }
-
-  private String buildConstructorCodeBlock(String name, String paramsType) {
-    StringBuilder builder = new StringBuilder(name);
-    builder.append("(")
-        .append(paramsType)
-        .append(" ")
-        .append(ConstantList.NAME_FIELD_OUTER_CLASS)
-        .append(")")
-        .append("{\n")
-        .append("this.")
-        .append(ConstantList.NAME_FIELD_OUTER_CLASS)
-        .append(" = ")
-        .append(ConstantList.NAME_FIELD_OUTER_CLASS)
-        .append(";\n")
-        .append("}\n");
-    return builder.toString();
-  }
-
-  def processMethodCallModel(CtClass ctClass, String name, List<MethodCallModel> callModelList) {
-    if (name == OnClick.name) {
-      MethodBindListenClass.OnClick.fillClass(ctClass)
-      callModelList.each {
-        MethodBindListenClass.OnClick.fillMethod("onClick", it)
-      }
-      MethodBindListenClass.OnClick.endInject(ctClass)
-    }
-    else if(name == OnLongClick.name){
-      MethodBindListenClass.OnLongClick.fillClass(ctClass)
-      callModelList.each {
-        MethodBindListenClass.OnLongClick.fillMethod("onLongClick", it)
-      }
-      MethodBindListenClass.OnLongClick.endInject(ctClass)
-    }
   }
 
   def startInject(CtClass injectClass) {
     injectMethod =
         "public void ${ConstantList.NAME_INJECT_METHOD}" + "(android.view.View ${ConstantList.VIEW_SOURCE}){\n"
+    def injectInterface = injectClass.classPool.get(ConstantList.NAME_FLAG_INTERFACE)
     if (ClassUtils.containSpecficInterface(injectClass.getSuperclass(), injectInterface)) {
       injectMethod += "super.${ConstantList.NAME_INJECT_METHOD}(${ConstantList.VIEW_SOURCE});\n"
     }

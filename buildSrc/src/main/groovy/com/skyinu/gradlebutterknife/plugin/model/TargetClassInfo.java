@@ -8,12 +8,12 @@ import javassist.CtClass;
  * Created by chen on 2018/3/12.
  */
 
-public class BindClassModel {
+public class TargetClassInfo {
   private CtClass injectClass;
   private String classFilePath;
   private int inheritanceDepth;
 
-  public BindClassModel(CtClass injectClass, String classFilePath) {
+  public TargetClassInfo(CtClass injectClass, String classFilePath) {
     this.injectClass = injectClass;
     this.classFilePath = classFilePath;
     inheritanceDepth = ClassUtils.getClassInheritanceDepth(injectClass);
@@ -32,17 +32,17 @@ public class BindClassModel {
   }
 
   @Override public String toString() {
-    return "BindClassModel{" +
+    return "TargetClassInfo{" +
         "injectClass=" + injectClass +
         ", classFilePath='" + classFilePath + '\'' +
         ", inheritanceDepth=" + inheritanceDepth +
         '}';
   }
 
-  public static class BindClassModelComparator implements Comparator<BindClassModel> {
+  public static class BindClassModelComparator implements Comparator<TargetClassInfo> {
 
-    @Override public int compare(BindClassModel bindClassModel, BindClassModel t1) {
-      return bindClassModel.getInheritanceDepth() - t1.getInheritanceDepth();
+    @Override public int compare(TargetClassInfo targetClassInfo, TargetClassInfo t1) {
+      return targetClassInfo.getInheritanceDepth() - t1.getInheritanceDepth();
     }
   }
 }

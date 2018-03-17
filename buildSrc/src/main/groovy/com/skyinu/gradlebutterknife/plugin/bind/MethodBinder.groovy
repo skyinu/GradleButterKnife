@@ -1,35 +1,76 @@
-package com.skyinu.gradlebutterknife.plugin
+package com.skyinu.gradlebutterknife.plugin.bind
 
 import com.skyinu.annotations.OnClick
 import com.skyinu.annotations.OnLongClick
+import com.skyinu.gradlebutterknife.plugin.ConstantList
 import com.skyinu.gradlebutterknife.plugin.model.MethodBindListenClass
 import com.skyinu.gradlebutterknife.plugin.model.MethodCallModel
 import com.skyinu.gradlebutterknife.plugin.util.BindUtils
 import com.skyinu.gradlebutterknife.plugin.util.ClassUtils
-import javassist.ClassPool
 import javassist.CtClass
 import javassist.CtMethod
-
 import java.lang.annotation.Annotation
 
 /**
  * Created by chen on 2018/3/13.*/
 
-public class MethodBinder {
-  ClassPool classPool
-  Map<Integer, String> idStringMap
-  Map<Integer, String> idFieldMap
-  String classPath
+class MethodBinder {
+  private Map<Integer, String> idStringMap
 
-  MethodBinder(ClassPool classPool, String classPath, Map<Integer, String> idStringMap,
-               Map<Integer, String> idFieldMap) {
-    this.classPool = classPool
+  MethodBinder(Map<Integer, String> idStringMap) {
     this.idStringMap = idStringMap
-    this.idFieldMap = idFieldMap
-    this.classPath = classPath
   }
 
-  String buildSetCodeBlock(CtClass injectClass, Annotation annotation) {
+  def processBindMethod(CtClass targetClass, String classPath, String buildMethodSrc,
+                        Map<Integer, String> idFieldMap){
+    def methodCallMap = new HashMap<String, List<MethodCallModel>>()
+    targetClass.declaredMethods.each {
+      CtMethod ctMethod = it
+      ctMethod.annotations.each {
+        Annotation annotation = it
+        if (!BindUtils.isAnnotationSupport(annotation)) {
+          return
+        }
+        buildMethodSrc += buildSetCodeBlock(targetClass, annotation, idFieldMap)
+        def callModelList = methodCallMap.get(annotation.annotationType().name)
+        if (!callModelList) {
+          callModelList = new ArrayList<MethodCallModel>()
+          methodCallMap.put(annotation.annotationType().name, callModelList)
+        }
+        buildMethodCallCodeBlock(callModelList, ctMethod, annotation)
+      }
+    }
+
+    ViewBindClassBuilder bindClassBuilder = new ViewBindClassBuilder(classPath, targetClass)
+
+    if (!methodCallMap.keySet().empty) {
+      methodCallMap.keySet().each {
+        processMethodCallModel(bindClassBuilder, it, methodCallMap.get(it))
+      }
+      bindClassBuilder.build()
+    }
+    return buildMethodSrc
+  }
+
+  def processMethodCallModel(ViewBindClassBuilder bindClassBuilder, String name, List<MethodCallModel> callModelList) {
+    if (name == OnClick.name) {
+      MethodBindListenClass.OnClick.fillClass(bindClassBuilder)
+      callModelList.each {
+        MethodBindListenClass.OnClick.fillMethod("onClick", it)
+      }
+      MethodBindListenClass.OnClick.endInject(bindClassBuilder)
+    }
+    else if(name == OnLongClick.name){
+      MethodBindListenClass.OnLongClick.fillClass(bindClassBuilder)
+      callModelList.each {
+        MethodBindListenClass.OnLongClick.fillMethod("onLongClick", it)
+      }
+      MethodBindListenClass.OnLongClick.endInject(bindClassBuilder)
+    }
+  }
+
+  String buildSetCodeBlock(CtClass injectClass, Annotation annotation,
+                           Map<Integer, String> idFieldMap) {
     if (!BindUtils.isAnnotationSupport(annotation)) {
       return ""
     }

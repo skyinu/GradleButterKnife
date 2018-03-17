@@ -1,5 +1,7 @@
 package com.skyinu.gradlebutterknife.plugin.model;
 
+import com.skyinu.gradlebutterknife.plugin.bind.ViewBindClassBuilder;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -16,14 +18,13 @@ public class MethodBindFuncModel {
   private StringBuilder methodBuildString;
   private String returnType;
   private String returnValue;
-  private String modify;
+  private String modify = "public";
   private String name;
   private List<Parameter> parameterList;
 
-  public MethodBindFuncModel(String returnType, String modify, String name, String returnValue,
+  public MethodBindFuncModel(String returnType, String name, String returnValue,
                              Parameter... parameters) {
     this.returnType = returnType;
-    this.modify = modify;
     this.name = name;
     this.returnValue = returnValue;
     this.parameterList = new ArrayList<>(parameters.length);
@@ -61,7 +62,7 @@ public class MethodBindFuncModel {
     methodBuildString.append("int id = view.getId();\n");
   }
 
-  public void endBuildMethod(CtClass ctClass) throws CannotCompileException {
+  public void endBuildMethod(ViewBindClassBuilder classBuilder) throws CannotCompileException {
     if(methodBuildString == null){
       return;
     }
@@ -69,8 +70,8 @@ public class MethodBindFuncModel {
         .append(returnValue)
         .append(";\n")
         .append("}\n");
-    CtMethod ctMethod = CtNewMethod.make(methodBuildString.toString(), ctClass);
-    ctClass.addMethod(ctMethod);
+    classBuilder.addMethod(methodBuildString.toString());
+
   }
 
   public String getName() {

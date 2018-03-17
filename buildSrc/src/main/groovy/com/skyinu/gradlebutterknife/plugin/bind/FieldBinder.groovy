@@ -1,4 +1,4 @@
-package com.skyinu.gradlebutterknife.plugin
+package com.skyinu.gradlebutterknife.plugin.bind
 
 import com.skyinu.annotations.BindAnim
 import com.skyinu.annotations.BindBitmap
@@ -9,8 +9,10 @@ import com.skyinu.annotations.BindInt
 import com.skyinu.annotations.BindString
 import com.skyinu.annotations.BindView
 import com.skyinu.annotations.BindViews
+import com.skyinu.gradlebutterknife.plugin.ConstantList
 import com.skyinu.gradlebutterknife.plugin.util.BindUtils
 import com.skyinu.gradlebutterknife.plugin.util.ClassUtils
+import javassist.CtClass
 import javassist.CtField
 
 import java.lang.annotation.Annotation;
@@ -19,27 +21,39 @@ import java.lang.annotation.Annotation;
  * Created by chen on 2018/3/13.
  */
 
-public class FieldBinder {
-
-  Map<Integer, String> idStringMap
+class FieldBinder {
+  private Map<Integer, String> idStringMap
 
   FieldBinder(Map<Integer, String> idStringMap) {
     this.idStringMap = idStringMap
   }
 
-  String buildBindFieldStatement(CtField injectField, Annotation annotation) {
+
+  def processBindField(CtClass targetClass, String bindMethodSrc, Map<Integer, String> idFieldMap){
+    targetClass.declaredFields.each {
+      CtField ctField = it
+      ctField.annotations.each {
+        bindMethodSrc += buildBindFieldStatement(ctField, it as Annotation, idFieldMap)
+      }
+    }
+
+    return bindMethodSrc
+  }
+
+  String buildBindFieldStatement(CtField bindField, Annotation annotation,
+                                 Map<Integer, String> idFieldMap) {
     if (!BindUtils.isAnnotationSupport(annotation)) {
       return ""
     }
     if (annotation instanceof BindViews) {
-      return buildBindFieldsStatement(injectField, annotation)
+      return buildBindFieldsStatement(bindField, annotation, idFieldMap)
     }
     def value = annotation.value()
     def idString = idStringMap.get(value)
-    def fieldName = injectField.name
+    def fieldName = bindField.name
     def injectType = ""
-    if (!ClassUtils.isPrimitive(injectField.signature)) {
-      injectType = injectField.signature
+    if (!ClassUtils.isPrimitive(bindField.signature)) {
+      injectType = bindField.signature
       injectType = injectType.substring(1, injectType.length() - 1).replace("/", ".")
     }
     def statement = "$fieldName = "
@@ -49,6 +63,7 @@ public class FieldBinder {
 
     if (annotation instanceof BindView) {
       statement += "${ConstantList.VIEW_SOURCE}.findViewById($idString);\n"
+      idFieldMap.put(value, fieldName)
       return statement
     }
     if (annotation instanceof BindString) {
@@ -82,7 +97,8 @@ public class FieldBinder {
     }
   }
 
-  String buildBindFieldsStatement(CtField injectField, Annotation annotation) {
+  String buildBindFieldsStatement(CtField injectField, Annotation annotation,
+                                  Map<Integer, String> idFieldMap) {
     def values = annotation.value()
     def idStrings = new ArrayList<String>()
     for (id in values) {

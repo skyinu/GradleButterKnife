@@ -1,13 +1,11 @@
 package com.skyinu.gradlebutterknife.plugin.model;
 
 import com.skyinu.gradlebutterknife.plugin.ConstantList;
-
+import com.skyinu.gradlebutterknife.plugin.bind.ViewBindClassBuilder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
 import javassist.CannotCompileException;
-import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.NotFoundException;
 
@@ -17,13 +15,24 @@ import javassist.NotFoundException;
 
 public enum MethodBindListenClass {
   OnClick("android.view.View", "setOnClickListener", "android.view.View$OnClickListener",
-      new MethodBindFuncModel("void", "public", "onClick", "",
+      new MethodBindFuncModel("void", "onClick", "",
           new Parameter("android.view.View", "view"))),
 
   OnLongClick("android.view.View", "setOnLongClickListener",
       "android.view.View$OnLongClickListener",
-      new MethodBindFuncModel("boolean", "public", "onLongClick", "false",
+      new MethodBindFuncModel("boolean", "onLongClick", "false",
           new Parameter("android.view.View", "view")));
+
+//  OnTextChanged("android.widget.EditText", "addTextChangedListener",
+//      "android.text.TextWatcher",
+//      new MethodBindFuncModel("void", "beforeTextChanged", "",
+//      new Parameter("java.lang.CharSequence", "var1"), new Parameter("int", "var2"),
+//          new Parameter("int", "var3"), new Parameter("int", "var4")),
+//      new MethodBindFuncModel("void", "onTextChanged", "",
+//          new Parameter("java.lang.CharSequence", "var1"), new Parameter("int", "var2"),
+//          new Parameter("int", "var3"), new Parameter("int", "var4")),
+//      new MethodBindFuncModel("void", "afterTextChanged", "",
+//          new Parameter("android.text.Editable", "var1")));
 
   private final String aimClassType;
   private final String setMethod;
@@ -39,10 +48,9 @@ public enum MethodBindListenClass {
     Collections.addAll(funcModelList, bindFuncModels);
   }
 
-  public void fillClass(CtClass ctClass) throws NotFoundException, CannotCompileException {
+  public void fillClass(ViewBindClassBuilder classBuilder) throws NotFoundException, CannotCompileException {
     //step 1: 插入接口
-    ClassPool classPool = ctClass.getClassPool();
-    ctClass.addInterface(classPool.get(bindInterface));
+    classBuilder.addInterface(bindInterface);
     //step 2:插入方法
     for (MethodBindFuncModel funcModel : funcModelList) {
       funcModel.buildCtMethod();
@@ -58,9 +66,9 @@ public enum MethodBindListenClass {
     }
   }
 
-  public void endInject(CtClass ctClass) throws CannotCompileException {
+  public void endInject(ViewBindClassBuilder classBuilder) throws CannotCompileException {
     for (MethodBindFuncModel funcModel:funcModelList) {
-        funcModel.endBuildMethod(ctClass);
+        funcModel.endBuildMethod(classBuilder);
     }
   }
   /**
