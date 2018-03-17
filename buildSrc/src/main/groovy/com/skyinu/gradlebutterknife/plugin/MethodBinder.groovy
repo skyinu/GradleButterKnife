@@ -3,7 +3,9 @@ package com.skyinu.gradlebutterknife.plugin
 import com.skyinu.annotations.OnClick
 import com.skyinu.annotations.OnLongClick
 import com.skyinu.gradlebutterknife.plugin.model.MethodBindListenClass
+import com.skyinu.gradlebutterknife.plugin.model.MethodCallModel
 import com.skyinu.gradlebutterknife.plugin.util.BindUtils
+import com.skyinu.gradlebutterknife.plugin.util.ClassUtils
 import javassist.ClassPool
 import javassist.CtClass
 import javassist.CtMethod
@@ -17,30 +19,28 @@ public class MethodBinder {
   ClassPool classPool
   Map<Integer, String> idStringMap
   Map<Integer, String> idFieldMap
-  int innerClassClickCount
-  int innerClassLongClickCount
   String classPath
 
   MethodBinder(ClassPool classPool, String classPath, Map<Integer, String> idStringMap,
-      Map<Integer, String> idFieldMap) {
+               Map<Integer, String> idFieldMap) {
     this.classPool = classPool
     this.idStringMap = idStringMap
     this.idFieldMap = idFieldMap
     this.classPath = classPath
   }
 
-  String buildBindMethodCodeBlock(CtClass injectClass, CtMethod injectMethod,
-                                  Annotation annotation) {
-    def values = annotation.value()
-    def methodName = injectMethod.name
+  String buildSetCodeBlock(CtClass injectClass, Annotation annotation) {
+    if (!BindUtils.isAnnotationSupport(annotation)) {
+      return ""
+    }
     def statement = ""
-    values.each {
-      def fieldName = idFieldMap.get(it, null)
-      statement += "${ConstantList.NAME_TEMP_VIEW} = "
-      if (fieldName == null) {
-        statement += "${ConstantList.VIEW_SOURCE}.findViewById(${idStringMap.get(it)});\n"
-      } else {
-        statement += "$fieldName;\n"
+    annotation.value().each {
+      String target = idFieldMap.get(it)
+      if(target == null || target.empty){
+        statement += "${ConstantList.NAME_TEMP_VIEW} = ${ConstantList.VIEW_SOURCE}.findViewById(${idStringMap.get(it)});\n"
+      }
+      else{
+        statement += "${ConstantList.NAME_TEMP_VIEW} = ${target};\n"
       }
       if (annotation instanceof OnClick) {
         statement += MethodBindListenClass.OnClick.buildListenerSetBlock(injectClass)
@@ -51,41 +51,29 @@ public class MethodBinder {
     return statement
   }
 
-
-  String buildBindMethodStatement(CtClass injectClass, CtMethod injectMethod,
-      Annotation annotation) {
-    if (!BindUtils.isAnnotationSupport(annotation)) {
-      return ""
-    }
-    def values = annotation.value()
+  def buildMethodCallCodeBlock(List<MethodCallModel> callModelList, CtMethod injectMethod,
+                                  Annotation annotation) {
     def methodName = injectMethod.name
-    def statement = ""
-    values.each {
-      def fieldName = idFieldMap.get(it, null)
-      statement += "${ConstantList.NAME_TEMP_VIEW} = "
-      if (fieldName == null) {
-        statement += "${ConstantList.VIEW_SOURCE}.findViewById(${idStringMap.get(it)});\n"
-      } else {
-        statement += "$fieldName;\n"
+    annotation.value().each {
+      def methodCallModel = new MethodCallModel(annotation)
+      def methodCallCode = "${ConstantList.NAME_FIELD_OUTER_CLASS}.$methodName"
+      if ((annotation instanceof OnClick) || (annotation instanceof OnLongClick)) {
+        if (injectMethod.parameterTypes.length > 0) {
+          methodCallCode += "((${injectMethod.parameterTypes[0].name})view);"
+        } else {
+          methodCallCode += "();"
+        }
+        if (!ClassUtils.isVoidType(injectMethod.getReturnType())) {
+          methodCallCode = "return " + methodCallCode + "\n"
+          methodCallModel.setWithReturnValue(true)
+        }
       }
-      def methodCall = "${ConstantList.NAME_FIELD_OUTER_CLASS}.$methodName"
-      if (injectMethod.parameterTypes.length > 0) {
-        methodCall += "((${injectMethod.parameterTypes[0].name})view);"
-      } else {
-        methodCall += "();"
-      }
-      if (annotation instanceof OnClick) {
-        String newClassName = "${ConstantList.NAME_INJECT_INNER_CLASS}${innerClassClickCount}"
-        innerClassClickCount++
-        statement += MethodBindListenClass.OnClick.buildCodeBlock(injectClass, classPath,
-            injectMethod, newClassName, methodCall)
-      } else if (annotation instanceof OnLongClick) {
-        String newClassName = "${ConstantList.NAME_INJECT_LONG_CLICK_CLASS}${innerClassLongClickCount}"
-        innerClassLongClickCount++
-        statement += MethodBindListenClass.OnLongClick.buildCodeBlock(injectClass,
-            classPath, injectMethod, newClassName, methodCall)
-      }
+      methodCallModel.setMethodCallCode(methodCallCode)
+      methodCallModel.setResponseViewId(idStringMap.get(it))
+      callModelList.add(methodCallModel)
     }
-    return statement
+
   }
+
+
 }

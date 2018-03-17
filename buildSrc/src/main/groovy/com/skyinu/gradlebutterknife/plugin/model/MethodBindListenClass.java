@@ -1,19 +1,14 @@
 package com.skyinu.gradlebutterknife.plugin.model;
 
 import com.skyinu.gradlebutterknife.plugin.ConstantList;
-import java.io.IOException;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
 import javassist.CannotCompileException;
 import javassist.ClassPool;
 import javassist.CtClass;
-import javassist.CtConstructor;
-import javassist.CtField;
-import javassist.CtMethod;
-import javassist.CtNewConstructor;
-import javassist.CtNewMethod;
-import javassist.Modifier;
 import javassist.NotFoundException;
 
 /**
@@ -36,7 +31,7 @@ public enum MethodBindListenClass {
   private final List<MethodBindFuncModel> funcModelList;
 
   MethodBindListenClass(String aimClassType, String setMethod, String bindInterface,
-      MethodBindFuncModel... bindFuncModels) {
+                        MethodBindFuncModel... bindFuncModels) {
     this.aimClassType = aimClassType;
     this.setMethod = setMethod;
     this.bindInterface = bindInterface;
@@ -44,68 +39,50 @@ public enum MethodBindListenClass {
     Collections.addAll(funcModelList, bindFuncModels);
   }
 
-  public String buildCodeBlock(CtClass ctClass, String classPath, CtMethod annoMethod,
-      String newClassName, String... methodCallList)
-      throws CannotCompileException, IOException, NotFoundException {
+  public void fillClass(CtClass ctClass) throws NotFoundException, CannotCompileException {
+    //step 1: 插入接口
     ClassPool classPool = ctClass.getClassPool();
-    //step 1:构造一个新类
-    String fullName = ctClass.getName() + "$" + newClassName;
-    CtClass injectClass = classPool.makeClass(fullName);
-    //step 2:添加调用方法需要的字段
-    CtField outClassField = new CtField(ctClass, ConstantList.NAME_FIELD_OUTER_CLASS, injectClass);
-    outClassField.setModifiers(Modifier.PRIVATE);
-    injectClass.addField(outClassField);
-    //step 3:注入构造方法
-    CtConstructor constructor =
-        CtNewConstructor.make(buildConstructorCodeBlock(newClassName, ctClass.getName()),
-            injectClass);
-    injectClass.addConstructor(constructor);
-    //step 4:注入接口
-    injectClass.addInterface(classPool.get(bindInterface));
-    //step 5:注入相应方法
-    for (int i = 0; i < methodCallList.length; i++) {
-      MethodBindFuncModel funcModel = funcModelList.get(i);
-      String methodCall = methodCallList[i];
-      CtMethod ctMethod = CtNewMethod.make(funcModel.buildMethodCodeBlock(annoMethod, methodCall),
-          injectClass);
-      injectClass.addMethod(ctMethod);
+    ctClass.addInterface(classPool.get(bindInterface));
+    //step 2:插入方法
+    for (MethodBindFuncModel funcModel : funcModelList) {
+      funcModel.buildCtMethod();
     }
-    injectClass.writeFile(classPath);
-    //step 6:set listen class
-    return buildListenerSetBlock(ctClass);
   }
 
-  public String buildListenerSetBlock(CtClass ctClass){
+  public void fillMethod(String methodName, MethodCallModel methodCallModel){
+    for (MethodBindFuncModel funcModel:funcModelList) {
+      if(methodName.equals(funcModel.getName())){
+        funcModel.fillCtMethod(methodCallModel);
+        return;
+      }
+    }
+  }
+
+  public void endInject(CtClass ctClass) throws CannotCompileException {
+    for (MethodBindFuncModel funcModel:funcModelList) {
+        funcModel.endBuildMethod(ctClass);
+    }
+  }
+  /**
+   * build code block like ((android.view.View)view).setOnClickLister(new Dispatcher(this))
+   *
+   * @param ctClass
+   * @return
+   */
+  public String buildListenerSetBlock(CtClass ctClass) {
     StringBuilder setCodeBlock = new StringBuilder("((");
     setCodeBlock.append(aimClassType)
-            .append(")")
-            .append(ConstantList.NAME_TEMP_VIEW)
-            .append(")")
-            .append(".")
-            .append(setMethod)
-            .append("(new")
-            .append(" ")
-            .append(ctClass.getName())
-            .append("$")
-            .append(ConstantList.NAME_CLASS_EVENT_DISPATCHER)
-            .append("(this));\n");
-    return setCodeBlock.toString();
-  }
-
-  private String buildConstructorCodeBlock(String name, String paramsType) {
-    StringBuilder builder = new StringBuilder(name);
-    builder.append("(")
-        .append(paramsType)
-        .append(" ")
-        .append(ConstantList.NAME_FIELD_OUTER_CLASS)
         .append(")")
-        .append("{\n")
-        .append("this.")
-        .append(ConstantList.NAME_FIELD_OUTER_CLASS)
-        .append(" = ")
-        .append(ConstantList.NAME_FIELD_OUTER_CLASS)
-        .append(";\n")
-        .append("}\n");
-    return builder.toString();
+        .append(ConstantList.NAME_TEMP_VIEW)
+        .append(")")
+        .append(".")
+        .append(setMethod)
+        .append("(new")
+        .append(" ")
+        .append(ctClass.getName())
+        .append("_")
+        .append(ConstantList.NAME_CLASS_EVENT_DISPATCHER)
+        .append("(this));\n");
+    return setCodeBlock.toString();
   }
 }

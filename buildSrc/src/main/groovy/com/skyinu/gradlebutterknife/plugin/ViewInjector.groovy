@@ -1,17 +1,23 @@
 package com.skyinu.gradlebutterknife.plugin
 
 import com.skyinu.annotations.BindView
+import com.skyinu.annotations.OnClick
+import com.skyinu.annotations.OnLongClick
+import com.skyinu.gradlebutterknife.plugin.model.MethodBindListenClass
+import com.skyinu.gradlebutterknife.plugin.model.MethodCallModel
 import com.skyinu.gradlebutterknife.plugin.util.BindUtils
 import com.skyinu.gradlebutterknife.plugin.util.ClassUtils
 import com.skyinu.gradlebutterknife.plugin.util.Log
 import javassist.ClassPool
 import javassist.CtClass
+import javassist.CtConstructor
 import javassist.CtField
 import javassist.CtMethod
+import javassist.CtNewConstructor
 import javassist.CtNewMethod
-import org.gradle.api.plugins.quality.CodeNarc
 
 import java.lang.annotation.Annotation
+import java.lang.reflect.Modifier
 
 /**
  * Created by chen on 2018/3/9.*/
@@ -50,28 +56,80 @@ public class ViewInjector {
       }
     }
     methodBinder = new MethodBinder(classPool, classPath, idStringMap, idFieldMap)
-    def hasInjectListen = false
+    def methodCallMap = new HashMap<String, List<MethodCallModel>>()
+
     injectClass.declaredMethods.each {
       CtMethod ctMethod = it
       ctMethod.annotations.each {
-        if (!BindUtils.isA4nnotationSupport(it as Annotation)) {
+        Annotation annotation = it
+        if (!BindUtils.isAnnotationSupport(annotation)) {
           return
         }
-        if(!hasInjectListen){
-          injectEventClassInstance(injectClass)
+        injectMethod += methodBinder.buildSetCodeBlock(injectClass, annotation)
+        def callModelList = methodCallMap.get(annotation.annotationType().name)
+        if (!callModelList) {
+          callModelList = new ArrayList<MethodCallModel>()
+          methodCallMap.put(annotation.annotationType().name, callModelList)
         }
-        injectMethod +=
-            methodBinder.buildBindMethodStatement(injectClass, ctMethod, it as Annotation)
+        methodBinder.buildMethodCallCodeBlock(callModelList, ctMethod, annotation)
       }
+    }
+
+    if (!methodCallMap.keySet().empty) {
+      String fullName = "${injectClass.name}_${ConstantList.NAME_CLASS_EVENT_DISPATCHER}"
+      def dispatcherClass = geneate(injectClass, fullName)
+      methodCallMap.keySet().each {
+        processMethodCallModel(dispatcherClass, it, methodCallMap.get(it))
+      }
+      dispatcherClass.writeFile(classPath)
     }
     endInject(injectClass, classPath)
   }
 
-  def injectEventClassInstance(CtClass injectClass){
-    def fullName = "${injectClass.name}\$${ConstantList.NAME_CLASS_EVENT_DISPATCHER}"
-    def statement = "$fullName ${ConstantList.NAME_LISTENER_INSTANCE} " +
-            "= new $fullName(${ConstantList.NAME_FIELD_OUTER_CLASS})"
-    injectMethod += statement
+  CtClass geneate(CtClass injectClass, String fullName){
+    CtClass tmpClass = classPool.makeClass(fullName);
+    CtField outClassField = new CtField(injectClass, ConstantList.NAME_FIELD_OUTER_CLASS, tmpClass);
+    outClassField.setModifiers(Modifier.PRIVATE);
+    tmpClass.addField(outClassField);
+    CtConstructor constructor =
+        CtNewConstructor.make(buildConstructorCodeBlock(ConstantList.NAME_CLASS_EVENT_DISPATCHER, injectClass.getName()),
+            tmpClass);
+    tmpClass.addConstructor(constructor)
+    return tmpClass
+  }
+
+  private String buildConstructorCodeBlock(String name, String paramsType) {
+    StringBuilder builder = new StringBuilder(name);
+    builder.append("(")
+        .append(paramsType)
+        .append(" ")
+        .append(ConstantList.NAME_FIELD_OUTER_CLASS)
+        .append(")")
+        .append("{\n")
+        .append("this.")
+        .append(ConstantList.NAME_FIELD_OUTER_CLASS)
+        .append(" = ")
+        .append(ConstantList.NAME_FIELD_OUTER_CLASS)
+        .append(";\n")
+        .append("}\n");
+    return builder.toString();
+  }
+
+  def processMethodCallModel(CtClass ctClass, String name, List<MethodCallModel> callModelList) {
+    if (name == OnClick.name) {
+      MethodBindListenClass.OnClick.fillClass(ctClass)
+      callModelList.each {
+        MethodBindListenClass.OnClick.fillMethod("onClick", it)
+      }
+      MethodBindListenClass.OnClick.endInject(ctClass)
+    }
+    else if(name == OnLongClick.name){
+      MethodBindListenClass.OnLongClick.fillClass(ctClass)
+      callModelList.each {
+        MethodBindListenClass.OnLongClick.fillMethod("onLongClick", it)
+      }
+      MethodBindListenClass.OnLongClick.endInject(ctClass)
+    }
   }
 
   def startInject(CtClass injectClass) {

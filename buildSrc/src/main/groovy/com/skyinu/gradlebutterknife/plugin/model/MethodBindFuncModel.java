@@ -1,17 +1,19 @@
 package com.skyinu.gradlebutterknife.plugin.model;
 
-import com.skyinu.gradlebutterknife.plugin.util.ClassUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import javassist.CannotCompileException;
+import javassist.CtClass;
 import javassist.CtMethod;
-import javassist.NotFoundException;
+import javassist.CtNewMethod;
 
 /**
  * Created by chen on 2018/3/14.
  */
 
 public class MethodBindFuncModel {
+  private StringBuilder methodBuildString;
   private String returnType;
   private String returnValue;
   private String modify;
@@ -19,7 +21,7 @@ public class MethodBindFuncModel {
   private List<Parameter> parameterList;
 
   public MethodBindFuncModel(String returnType, String modify, String name, String returnValue,
-      Parameter... parameters) {
+                             Parameter... parameters) {
     this.returnType = returnType;
     this.modify = modify;
     this.name = name;
@@ -40,30 +42,42 @@ public class MethodBindFuncModel {
     parameterList.add(parameter);
   }
 
-  public String buildMethodCodeBlock(CtMethod ctMethod, String methodBody)
-      throws NotFoundException {
-    StringBuilder builder = new StringBuilder(modify);
-    builder.append(" ")
+  public void buildCtMethod() {
+    methodBuildString = new StringBuilder(modify);
+    methodBuildString.append(" ")
         .append(returnType)
         .append(" ")
         .append(name)
         .append("(");
     if (!parameterList.isEmpty()) {
       for (Parameter parameter : parameterList) {
-        builder.append(parameter.buildCodeBlock())
+        methodBuildString.append(parameter.buildCodeBlock())
             .append(",");
       }
-      builder.deleteCharAt(builder.length() - 1);
+      methodBuildString.deleteCharAt(methodBuildString.length() - 1);
     }
-    if (ClassUtils.isVoidType(ctMethod.getReturnType())) {
-      methodBody += "return " + returnValue + ";\n";
-    } else {
-      methodBody = "return " + methodBody + "\n";
+    methodBuildString.append(")\n")
+        .append("{\n");
+    methodBuildString.append("int id = view.getId();\n");
+  }
+
+  public void endBuildMethod(CtClass ctClass) throws CannotCompileException {
+    if(methodBuildString == null){
+      return;
     }
-    builder.append(")\n")
-        .append("{\n")
-        .append(methodBody)
+    methodBuildString.append("return ")
+        .append(returnValue)
+        .append(";\n")
         .append("}\n");
-    return builder.toString();
+    CtMethod ctMethod = CtNewMethod.make(methodBuildString.toString(), ctClass);
+    ctClass.addMethod(ctMethod);
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public void fillCtMethod(MethodCallModel methodCallModel) {
+    methodBuildString.append(methodCallModel.buildMethodCallCode("id"));
   }
 }

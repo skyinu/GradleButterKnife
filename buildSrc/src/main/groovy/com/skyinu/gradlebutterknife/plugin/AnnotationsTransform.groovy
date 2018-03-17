@@ -90,12 +90,16 @@ public class AnnotationsTransform extends Transform {
       }
     }
 
-    injector = new ViewInjector(classPool, collector.idStringMap)
-    injectClassQueue.each {
-      inject(it.injectClass, it.classFilePath)
-    }
-    classPaths.each {
-      classPool.removeClassPath(it)
+    try {
+      injector = new ViewInjector(classPool, collector.idStringMap)
+      injectClassQueue.each {
+        inject(it.injectClass, it.classFilePath)
+      }
+
+    } finally {
+      classPaths.each {
+        classPool.removeClassPath(it)
+      }
     }
   }
 
