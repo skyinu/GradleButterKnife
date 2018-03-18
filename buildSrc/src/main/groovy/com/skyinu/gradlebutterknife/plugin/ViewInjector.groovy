@@ -18,11 +18,12 @@ public class ViewInjector {
   Map<Integer, String> idFieldMap
   FieldBinder fieldBinder
   MethodBinder methodBinder
+  int generateClassCount
 
   ViewInjector(Map<Integer, String> idStringMap) {
     this.idStringMap = idStringMap
     fieldBinder = new FieldBinder(idStringMap)
-    methodBinder = new MethodBinder(idStringMap)
+    methodBinder = new MethodBinder(idStringMap, generateClassCount)
     idFieldMap = new HashMap<>()
   }
 

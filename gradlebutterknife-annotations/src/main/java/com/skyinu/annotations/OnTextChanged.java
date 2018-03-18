@@ -11,10 +11,10 @@ import java.lang.annotation.Target;
 public @interface OnTextChanged {
   @IdRes int[] value();
 
-  Callback callback() default Callback.TEXT_CHANGED;
+  Callback callback() default Callback.ON_TEXT_CHANGED;
 
   enum Callback {
-    TEXT_CHANGED,
+    ON_TEXT_CHANGED,
     BEFORE_TEXT_CHANGED,
     AFTER_TEXT_CHANGED,
   }

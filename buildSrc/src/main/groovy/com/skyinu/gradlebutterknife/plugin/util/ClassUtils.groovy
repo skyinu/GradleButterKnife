@@ -47,7 +47,7 @@ public class ClassUtils {
 
   static boolean containSpecficMethod(CtClass ctClass, CtMethod ctMethod){
     return ctClass.declaredMethods.find {
-      return it.signature == ctMethod.signature
+      return it == ctMethod
     }
   }
 }

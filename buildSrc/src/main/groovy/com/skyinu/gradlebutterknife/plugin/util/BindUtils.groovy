@@ -11,6 +11,7 @@ import com.skyinu.annotations.BindView
 import com.skyinu.annotations.BindViews
 import com.skyinu.annotations.OnClick
 import com.skyinu.annotations.OnLongClick
+import com.skyinu.annotations.OnTextChanged
 import com.skyinu.gradlebutterknife.plugin.ConstantList
 import javassist.CtClass
 import javassist.CtField
@@ -26,7 +27,7 @@ public class BindUtils {
 
   static List<Class> SUPPORTANNOTATIONS = Arrays.asList(BindView.class, BindViews.class,
       BindString.class, BindInt.class, BindBool.class, BindColor.class, BindDimen.class,
-      BindBitmap.class, BindAnim.class, OnClick.class, OnLongClick.class)
+      BindBitmap.class, BindAnim.class, OnClick.class, OnLongClick.class, OnTextChanged.class)
 
   static boolean shouldBindView(CtClass ctClass) {
     def result = ctClass.declaredFields.find {
@@ -85,6 +86,9 @@ public class BindUtils {
       return true
     }
     if (annotation instanceof OnLongClick) {
+      return true
+    }
+    if(annotation instanceof OnTextChanged){
       return true
     }
     return false

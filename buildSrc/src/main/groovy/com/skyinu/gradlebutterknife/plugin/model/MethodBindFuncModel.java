@@ -1,14 +1,10 @@
 package com.skyinu.gradlebutterknife.plugin.model;
 
 import com.skyinu.gradlebutterknife.plugin.bind.ViewBindClassBuilder;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import javassist.CannotCompileException;
-import javassist.CtClass;
-import javassist.CtMethod;
-import javassist.CtNewMethod;
 
 /**
  * Created by chen on 2018/3/14.
@@ -31,19 +27,7 @@ public class MethodBindFuncModel {
     Collections.addAll(parameterList, parameters);
   }
 
-  public MethodBindFuncModel(String returnType, String modify, String name, String returnValue) {
-    this.returnType = returnType;
-    this.modify = modify;
-    this.name = name;
-    this.returnValue = returnValue;
-    this.parameterList = new ArrayList<>();
-  }
-
-  public void addParameter(Parameter parameter) {
-    parameterList.add(parameter);
-  }
-
-  public void buildCtMethod() {
+  public void buildCtMethod(boolean noId) {
     methodBuildString = new StringBuilder(modify);
     methodBuildString.append(" ")
         .append(returnType)
@@ -59,7 +43,10 @@ public class MethodBindFuncModel {
     }
     methodBuildString.append(")\n")
         .append("{\n");
-    methodBuildString.append("int id = view.getId();\n");
+    if(!noId) {
+      methodBuildString.append("int id = view.getId();\n");
+    }
+
   }
 
   public void endBuildMethod(ViewBindClassBuilder classBuilder) throws CannotCompileException {
@@ -71,14 +58,17 @@ public class MethodBindFuncModel {
         .append(";\n")
         .append("}\n");
     classBuilder.addMethod(methodBuildString.toString());
-
   }
 
   public String getName() {
     return name;
   }
 
-  public void fillCtMethod(MethodCallModel methodCallModel) {
-    methodBuildString.append(methodCallModel.buildMethodCallCode("id"));
+  public List<Parameter> getParameterList() {
+    return parameterList;
+  }
+
+  public void fillCtMethod(String methodCallCode) {
+    methodBuildString.append(methodCallCode);
   }
 }

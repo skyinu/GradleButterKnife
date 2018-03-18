@@ -2,13 +2,17 @@ package com.skyinu.gradlebutterknife.plugin.bind
 
 import com.skyinu.annotations.OnClick
 import com.skyinu.annotations.OnLongClick
+import com.skyinu.annotations.OnTextChanged
 import com.skyinu.gradlebutterknife.plugin.ConstantList
+import com.skyinu.gradlebutterknife.plugin.model.MethodBindFuncModel
 import com.skyinu.gradlebutterknife.plugin.model.MethodBindListenClass
-import com.skyinu.gradlebutterknife.plugin.model.MethodCallModel
+import com.skyinu.gradlebutterknife.plugin.model.MethodViewBind
+import com.skyinu.gradlebutterknife.plugin.model.Parameter
 import com.skyinu.gradlebutterknife.plugin.util.BindUtils
 import com.skyinu.gradlebutterknife.plugin.util.ClassUtils
 import javassist.CtClass
 import javassist.CtMethod
+
 import java.lang.annotation.Annotation
 
 /**
@@ -16,105 +20,205 @@ import java.lang.annotation.Annotation
 
 class MethodBinder {
   private Map<Integer, String> idStringMap
+  private ViewBindClassBuilder commonBindClassBuilder
+  private CtClass targetClass
+  private String classPath
+  private String buildMethodSrc
+  private Map<Integer, String> idFieldMap
+  private Map<String, List<MethodViewBind>> methodBindInfoList
+  private int generateClassCount
 
-  MethodBinder(Map<Integer, String> idStringMap) {
+  MethodBinder(Map<Integer, String> idStringMap, int generateClassCount) {
     this.idStringMap = idStringMap
+    this.generateClassCount = generateClassCount
   }
 
   def processBindMethod(CtClass targetClass, String classPath, String buildMethodSrc,
-                        Map<Integer, String> idFieldMap){
-    def methodCallMap = new HashMap<String, List<MethodCallModel>>()
+                        Map<Integer, String> idFieldMap) {
+    this.targetClass = targetClass
+    this.classPath = classPath
+    this.buildMethodSrc = buildMethodSrc
+    this.idFieldMap = idFieldMap
+    this.methodBindInfoList = new HashMap<String, List<MethodViewBind>>()
+    commonBindClassBuilder = null
+    generateClassCount = 0
     targetClass.declaredMethods.each {
-      CtMethod ctMethod = it
-      ctMethod.annotations.each {
+      CtMethod targetMethod = it
+      targetMethod.annotations.each {
         Annotation annotation = it
         if (!BindUtils.isAnnotationSupport(annotation)) {
           return
         }
-        buildMethodSrc += buildSetCodeBlock(targetClass, annotation, idFieldMap)
-        def callModelList = methodCallMap.get(annotation.annotationType().name)
-        if (!callModelList) {
-          callModelList = new ArrayList<MethodCallModel>()
-          methodCallMap.put(annotation.annotationType().name, callModelList)
+        collectMethodBindInfo(targetMethod, annotation)
+      }
+    }
+    if(methodBindInfoList.keySet().empty){
+      return this.buildMethodSrc
+    }
+    processMethodBindInfo()
+    return this.buildMethodSrc
+  }
+
+  def collectMethodBindInfo(CtMethod targetMethod, Annotation annotation){
+    String annoName = annotation.annotationType().name
+    List<MethodViewBind> viewBindList = methodBindInfoList.get(annoName)
+    if(!viewBindList){
+      viewBindList = new ArrayList<>()
+      methodBindInfoList.put(annoName, viewBindList)
+    }
+    annotation.value().each{
+      def value = it
+      def viewId = idStringMap.get(value)
+      def viewFieldName = idFieldMap.get(value)
+      def bindMethodName = null
+      def viewClassType = null
+      if(annotation instanceof OnClick){
+        bindMethodName = "onClick"
+        viewClassType = MethodBindListenClass.OnClick.aimClassType
+      }
+      else if(annotation instanceof OnLongClick){
+        bindMethodName = "onLongClick"
+        viewClassType = MethodBindListenClass.OnLongClick.aimClassType
+      }
+      else if(annotation instanceof OnTextChanged){
+        OnTextChanged onTextChanged = annotation
+        def callBackFlag = onTextChanged.callback().name()
+        bindMethodName = MethodBindListenClass.OnTextChanged.convertToTargetMethod(callBackFlag)
+        viewClassType = MethodBindListenClass.OnTextChanged.aimClassType
+      }
+      def targetMethodName = targetMethod.name
+      def methodParams  = targetMethod.parameterTypes
+      def withReturnValue = !ClassUtils.isVoidType(targetMethod.returnType)
+      MethodViewBind viewBind = new MethodViewBind(bindMethodName, targetMethodName, viewFieldName,
+          viewId, viewClassType, methodParams, withReturnValue)
+      viewBindList.add(viewBind)
+    }
+  }
+
+  def processMethodBindInfo(){
+    methodBindInfoList.keySet().each {
+      String key = it
+      List<MethodViewBind> viewBindList = methodBindInfoList.get(key)
+      //TODO convert data
+      MethodBindListenClass listenClass = null
+      ViewBindClassBuilder classBuilder = null
+      if(key == OnClick.name){
+        listenClass = MethodBindListenClass.OnClick
+        classBuilder = ensureBindClassExist()
+        realProcessMethodBindInfo(listenClass, classBuilder, viewBindList)
+
+      }
+      else if(key == OnLongClick.name){
+        listenClass = MethodBindListenClass.OnLongClick
+        classBuilder = ensureBindClassExist()
+        realProcessMethodBindInfo(listenClass, classBuilder, viewBindList)
+      }
+      else if(key == OnTextChanged.name){
+        listenClass = MethodBindListenClass.OnTextChanged
+        Map<String, List<MethodViewBind>> groupBindMap = viewBindList.groupBy {
+          it.viewId
         }
-        buildMethodCallCodeBlock(callModelList, ctMethod, annotation)
-      }
-    }
-
-    ViewBindClassBuilder bindClassBuilder = new ViewBindClassBuilder(classPath, targetClass)
-
-    if (!methodCallMap.keySet().empty) {
-      methodCallMap.keySet().each {
-        processMethodCallModel(bindClassBuilder, it, methodCallMap.get(it))
-      }
-      bindClassBuilder.build()
-    }
-    return buildMethodSrc
-  }
-
-  def processMethodCallModel(ViewBindClassBuilder bindClassBuilder, String name, List<MethodCallModel> callModelList) {
-    if (name == OnClick.name) {
-      MethodBindListenClass.OnClick.fillClass(bindClassBuilder)
-      callModelList.each {
-        MethodBindListenClass.OnClick.fillMethod("onClick", it)
-      }
-      MethodBindListenClass.OnClick.endInject(bindClassBuilder)
-    }
-    else if(name == OnLongClick.name){
-      MethodBindListenClass.OnLongClick.fillClass(bindClassBuilder)
-      callModelList.each {
-        MethodBindListenClass.OnLongClick.fillMethod("onLongClick", it)
-      }
-      MethodBindListenClass.OnLongClick.endInject(bindClassBuilder)
-    }
-  }
-
-  String buildSetCodeBlock(CtClass injectClass, Annotation annotation,
-                           Map<Integer, String> idFieldMap) {
-    if (!BindUtils.isAnnotationSupport(annotation)) {
-      return ""
-    }
-    def statement = ""
-    annotation.value().each {
-      String target = idFieldMap.get(it)
-      if(target == null || target.empty){
-        statement += "${ConstantList.NAME_TEMP_VIEW} = ${ConstantList.VIEW_SOURCE}.findViewById(${idStringMap.get(it)});\n"
-      }
-      else{
-        statement += "${ConstantList.NAME_TEMP_VIEW} = ${target};\n"
-      }
-      if (annotation instanceof OnClick) {
-        statement += MethodBindListenClass.OnClick.buildListenerSetBlock(injectClass)
-      } else if (annotation instanceof OnLongClick) {
-        statement += MethodBindListenClass.OnLongClick.buildListenerSetBlock(injectClass)
-      }
-    }
-    return statement
-  }
-
-  def buildMethodCallCodeBlock(List<MethodCallModel> callModelList, CtMethod injectMethod,
-                                  Annotation annotation) {
-    def methodName = injectMethod.name
-    annotation.value().each {
-      def methodCallModel = new MethodCallModel(annotation)
-      def methodCallCode = "${ConstantList.NAME_FIELD_OUTER_CLASS}.$methodName"
-      if ((annotation instanceof OnClick) || (annotation instanceof OnLongClick)) {
-        if (injectMethod.parameterTypes.length > 0) {
-          methodCallCode += "((${injectMethod.parameterTypes[0].name})view);"
-        } else {
-          methodCallCode += "();"
+        groupBindMap.keySet().each {
+          def bindList = groupBindMap.get(it)
+          ViewBindClassBuilder builder = new ViewBindClassBuilder(classPath,
+              targetClass, ConstantList.NAME_CLASS_EVENT_DISPATCHER + generateClassCount)
+          generateClassCount++
+          realProcessMethodBindInfo(listenClass, builder, bindList)
+          builder.build()
         }
-        if (!ClassUtils.isVoidType(injectMethod.getReturnType())) {
-          methodCallCode = "return " + methodCallCode + "\n"
-          methodCallModel.setWithReturnValue(true)
-        }
-      }
-      methodCallModel.setMethodCallCode(methodCallCode)
-      methodCallModel.setResponseViewId(idStringMap.get(it))
-      callModelList.add(methodCallModel)
-    }
 
+      }
+    }
+    if(commonBindClassBuilder != null){
+      commonBindClassBuilder.build()
+
+    }
   }
 
+  def realProcessMethodBindInfo(MethodBindListenClass listenClass, ViewBindClassBuilder classBuilder,
+                                List<MethodViewBind> viewBindList){
+    // 构造class 类
 
+    fillClass(listenClass, classBuilder)
+    viewBindList.each {
+      buildMethodSrc += buildSetCodeBlock(listenClass, it, classBuilder.fullName)
+
+      buildMethodCallCodeBlock(listenClass, it)
+    }
+    endInject(listenClass, classBuilder)
+  }
+
+  def buildMethodCallCodeBlock(MethodBindListenClass listenClass, MethodViewBind methodViewBind) {
+    def bindFuncModel = listenClass.findMethodBindFuncModelByMethod(methodViewBind.bindMethodName)
+    def  parameterList = bindFuncModel.parameterList
+    def methodParams = methodViewBind.paramsTypes
+    def inputParamsCount = methodParams.size()
+    def code = ""
+    if(!listenClass.isNoId()){
+      code = "if (id == ${methodViewBind.viewId}) {\n"
+    }
+    if(methodViewBind.withReturnValue()){
+      code += "return "
+    }
+    code += "${ConstantList.NAME_FIELD_OUTER_CLASS}.${methodViewBind.targetMethodName}("
+    for (int i = 0; i < inputParamsCount; i++) {
+      Parameter param = parameterList.get(i)
+      code += "(${methodParams.get(i)})${param.name}"
+      if(i != inputParamsCount -1){
+        code += ","
+      }
+    }
+    code += ");\n"
+    if(!listenClass.isNoId()){
+      code += "}\n"
+    }
+    bindFuncModel.fillCtMethod(code)
+  }
+
+  def fillClass(MethodBindListenClass listenClass, ViewBindClassBuilder classBuilder) {
+    //step 1: 插入接口
+    classBuilder.addInterface(listenClass.bindInterface)
+    //step 2:插入方法
+    for (MethodBindFuncModel funcModel : listenClass.funcModelList) {
+      funcModel.buildCtMethod(listenClass.isNoId())
+    }
+  }
+
+  def endInject(MethodBindListenClass listenClass, ViewBindClassBuilder classBuilder) {
+    for (MethodBindFuncModel funcModel: listenClass.funcModelList) {
+      funcModel.endBuildMethod(classBuilder)
+    }
+  }
+
+  /**
+   * build code block like ((android.view.View)view).setOnClickLister(new Dispatcher(this))
+   * @param listenClass
+   * @param viewBind
+   * @param listenerName
+   * @return
+   */
+  def buildSetCodeBlock(MethodBindListenClass listenClass, MethodViewBind viewBind,
+                        String listenerName){
+    //step 1 : set view
+    def code = ConstantList.NAME_TEMP_VIEW
+    if(!viewBind.viewFieldName || viewBind.viewFieldName.empty){
+      code += "= (${viewBind.viewClassType})" +
+          "${ConstantList.VIEW_SOURCE}.findViewById(${viewBind.viewId});\n"
+    }
+    else{
+      code += "= (${viewBind.viewClassType})${viewBind.viewFieldName};\n"
+    }
+    //step 2: set listener
+    code += "((${viewBind.viewClassType})${ConstantList.NAME_TEMP_VIEW})" +
+        ".${listenClass.setMethod}(new $listenerName(this));\n"
+    return code
+  }
+
+  def ensureBindClassExist(){
+    if(commonBindClassBuilder != null){
+      return commonBindClassBuilder
+    }
+    commonBindClassBuilder = new ViewBindClassBuilder(classPath, targetClass, ConstantList.NAME_CLASS_EVENT_DISPATCHER)
+    return commonBindClassBuilder
+  }
 }
