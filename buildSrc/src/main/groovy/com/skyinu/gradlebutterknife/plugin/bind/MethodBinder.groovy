@@ -1,8 +1,15 @@
 package com.skyinu.gradlebutterknife.plugin.bind
 
+import com.skyinu.annotations.OnCheckedChanged
 import com.skyinu.annotations.OnClick
+import com.skyinu.annotations.OnEditorAction
+import com.skyinu.annotations.OnFocusChange
+import com.skyinu.annotations.OnItemClick
+import com.skyinu.annotations.OnItemLongClick
+import com.skyinu.annotations.OnItemSelected
 import com.skyinu.annotations.OnLongClick
 import com.skyinu.annotations.OnTextChanged
+import com.skyinu.annotations.OnTouch
 import com.skyinu.gradlebutterknife.plugin.ConstantList
 import com.skyinu.gradlebutterknife.plugin.model.MethodBindFuncModel
 import com.skyinu.gradlebutterknife.plugin.model.MethodBindListenClass
@@ -70,22 +77,45 @@ class MethodBinder {
       def value = it
       def viewId = idStringMap.get(value)
       def viewFieldName = idFieldMap.get(value)
-      def bindMethodName = null
-      def viewClassType = null
+      def methodKey = null
+      MethodBindListenClass listenClass = null
       if(annotation instanceof OnClick){
-        bindMethodName = "onClick"
-        viewClassType = MethodBindListenClass.OnClick.aimClassType
+        listenClass = MethodBindListenClass.OnClick
       }
       else if(annotation instanceof OnLongClick){
-        bindMethodName = "onLongClick"
-        viewClassType = MethodBindListenClass.OnLongClick.aimClassType
+        listenClass = MethodBindListenClass.OnLongClick
       }
       else if(annotation instanceof OnTextChanged){
         OnTextChanged onTextChanged = annotation
-        def callBackFlag = onTextChanged.callback().name()
-        bindMethodName = MethodBindListenClass.OnTextChanged.convertToTargetMethod(callBackFlag)
-        viewClassType = MethodBindListenClass.OnTextChanged.aimClassType
+        listenClass = MethodBindListenClass.OnTextChanged
+        methodKey = onTextChanged.callback().name()
       }
+      else if(annotation instanceof OnCheckedChanged){
+        listenClass = MethodBindListenClass.OnCheckedChanged
+      }
+      else if(annotation instanceof OnEditorAction){
+        listenClass = MethodBindListenClass.OnEditorAction
+      }
+      else if(annotation instanceof OnFocusChange){
+        listenClass = MethodBindListenClass.OnFocusChange
+      }
+      else if(annotation instanceof OnItemClick){
+        listenClass = MethodBindListenClass.OnItemClick
+      }
+      else if(annotation instanceof OnItemLongClick){
+        listenClass = MethodBindListenClass.OnItemLongClick
+      }
+      else if(annotation instanceof OnItemSelected){
+        OnItemSelected onItemSelected = annotation
+        listenClass = MethodBindListenClass.OnItemSelected
+        methodKey = onItemSelected.callback().name()
+      }
+      else if(annotation instanceof OnTouch){
+        listenClass = MethodBindListenClass.OnTouch
+      }
+
+      def bindMethodName = listenClass.convertToTargetMethod(methodKey)
+      def viewClassType = listenClass.aimClassType
       def targetMethodName = targetMethod.name
       def methodParams  = targetMethod.parameterTypes
       def withReturnValue = !ClassUtils.isVoidType(targetMethod.returnType)
@@ -126,8 +156,44 @@ class MethodBinder {
           realProcessMethodBindInfo(listenClass, builder, bindList)
           builder.build()
         }
-
       }
+      else if(key == OnCheckedChanged.name){
+        listenClass = MethodBindListenClass.OnCheckedChanged
+        classBuilder = ensureBindClassExist()
+        realProcessMethodBindInfo(listenClass, classBuilder, viewBindList)
+      }
+      else if(key == OnEditorAction.name){
+        listenClass = MethodBindListenClass.OnEditorAction
+        classBuilder = ensureBindClassExist()
+        realProcessMethodBindInfo(listenClass, classBuilder, viewBindList)
+      }
+      else if(key == OnFocusChange.name){
+        listenClass = MethodBindListenClass.OnFocusChange
+        classBuilder = ensureBindClassExist()
+        realProcessMethodBindInfo(listenClass, classBuilder, viewBindList)
+      }
+      else if(key == OnItemClick.name){
+        listenClass = MethodBindListenClass.OnItemClick
+        classBuilder = ensureBindClassExist()
+        realProcessMethodBindInfo(listenClass, classBuilder, viewBindList)
+      }
+      else if(key == OnItemLongClick.name){
+        listenClass = MethodBindListenClass.OnItemLongClick
+        classBuilder = ensureBindClassExist()
+        realProcessMethodBindInfo(listenClass, classBuilder, viewBindList)
+      }
+      else if(key == OnItemSelected.name){
+        listenClass = MethodBindListenClass.OnItemSelected
+        classBuilder = ensureBindClassExist()
+        realProcessMethodBindInfo(listenClass, classBuilder, viewBindList)
+      }
+      else if(key == OnTouch.name){
+        listenClass = MethodBindListenClass.OnTouch
+        classBuilder = ensureBindClassExist()
+        realProcessMethodBindInfo(listenClass, classBuilder, viewBindList)
+      }
+
+
     }
     if(commonBindClassBuilder != null){
       commonBindClassBuilder.build()
@@ -157,7 +223,7 @@ class MethodBinder {
     if(!listenClass.isNoId()){
       code = "if (id == ${methodViewBind.viewId}) {\n"
     }
-    if(methodViewBind.withReturnValue()){
+    if(methodViewBind.withReturnValue() && bindFuncModel.hasReturnValue()){
       code += "return "
     }
     code += "${ConstantList.NAME_FIELD_OUTER_CLASS}.${methodViewBind.targetMethodName}("

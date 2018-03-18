@@ -8,6 +8,7 @@ import com.android.build.api.transform.TransformOutputProvider
 import com.android.build.gradle.LibraryPlugin
 import com.skyinu.gradlebutterknife.plugin.model.TargetClassInfo
 import com.skyinu.gradlebutterknife.plugin.util.BindUtils
+import javassist.ClassClassPath
 import javassist.ClassPath
 import javassist.ClassPool
 import javassist.CtClass
@@ -97,6 +98,8 @@ public class AnnotationsTransform extends Transform {
       }
 
     } finally {
+      injector = null
+      classPool.clearImportedPackages()
       classPaths.each {
         classPool.removeClassPath(it)
       }

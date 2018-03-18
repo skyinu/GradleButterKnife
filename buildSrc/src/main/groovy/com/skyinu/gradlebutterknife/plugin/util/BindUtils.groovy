@@ -9,9 +9,16 @@ import com.skyinu.annotations.BindInt
 import com.skyinu.annotations.BindString
 import com.skyinu.annotations.BindView
 import com.skyinu.annotations.BindViews
+import com.skyinu.annotations.OnCheckedChanged
 import com.skyinu.annotations.OnClick
+import com.skyinu.annotations.OnEditorAction
+import com.skyinu.annotations.OnFocusChange
+import com.skyinu.annotations.OnItemClick
+import com.skyinu.annotations.OnItemLongClick
+import com.skyinu.annotations.OnItemSelected
 import com.skyinu.annotations.OnLongClick
 import com.skyinu.annotations.OnTextChanged
+import com.skyinu.annotations.OnTouch
 import com.skyinu.gradlebutterknife.plugin.ConstantList
 import javassist.CtClass
 import javassist.CtField
@@ -27,7 +34,9 @@ public class BindUtils {
 
   static List<Class> SUPPORTANNOTATIONS = Arrays.asList(BindView.class, BindViews.class,
       BindString.class, BindInt.class, BindBool.class, BindColor.class, BindDimen.class,
-      BindBitmap.class, BindAnim.class, OnClick.class, OnLongClick.class, OnTextChanged.class)
+      BindBitmap.class, BindAnim.class, OnClick.class, OnLongClick.class, OnTextChanged.class,
+      OnCheckedChanged.class, OnEditorAction.class, OnFocusChange.class, OnItemClick.class,
+      OnItemLongClick.class, OnItemSelected.class, OnTouch.class)
 
   static boolean shouldBindView(CtClass ctClass) {
     def result = ctClass.declaredFields.find {
@@ -54,43 +63,10 @@ public class BindUtils {
     }
   }
 
-  static boolean isAnnotationSupport(Object annotation) {
-    if (annotation instanceof BindView) {
-      return true
+  static boolean isAnnotationSupport(Annotation annotation) {
+    def name = annotation.annotationType().name
+    return SUPPORTANNOTATIONS.find {
+      return name == it.name
     }
-    if (annotation instanceof BindString) {
-      return true
-    }
-    if (annotation instanceof BindInt) {
-      return true
-    }
-    if (annotation instanceof BindBool) {
-      return true
-    }
-    if (annotation instanceof BindColor) {
-      return true
-    }
-    if (annotation instanceof BindDimen) {
-      return true
-    }
-    if (annotation instanceof BindBitmap) {
-      return true
-    }
-    if (annotation instanceof BindAnim) {
-      return true
-    }
-    if (annotation instanceof BindViews) {
-      return true
-    }
-    if (annotation instanceof OnClick) {
-      return true
-    }
-    if (annotation instanceof OnLongClick) {
-      return true
-    }
-    if(annotation instanceof OnTextChanged){
-      return true
-    }
-    return false
   }
 }

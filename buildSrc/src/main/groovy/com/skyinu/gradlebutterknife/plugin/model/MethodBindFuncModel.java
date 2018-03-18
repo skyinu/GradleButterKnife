@@ -64,6 +64,10 @@ public class MethodBindFuncModel {
     return name;
   }
 
+  public boolean hasReturnValue(){
+    return !returnValue.isEmpty();
+  }
+
   public List<Parameter> getParameterList() {
     return parameterList;
   }

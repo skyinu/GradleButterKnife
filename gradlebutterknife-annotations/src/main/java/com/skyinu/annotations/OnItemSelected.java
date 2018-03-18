@@ -1,6 +1,8 @@
 package com.skyinu.annotations;
 
 import android.support.annotation.IdRes;
+import android.view.View;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -9,16 +11,14 @@ import java.lang.annotation.Target;
 /**
  * copy from butterKnife-annotation
  */
-@Target(ElementType.METHOD)
 @Retention(RetentionPolicy.CLASS)
-public @interface OnTextChanged {
-  @IdRes int[] value();
-
-  Callback callback() default Callback.ON_TEXT_CHANGED;
+@Target(ElementType.METHOD)
+public @interface OnItemSelected {
+  @IdRes int[] value() default { View.NO_ID };
+  Callback callback() default Callback.ON_ITEM_SELECTED;
 
   enum Callback {
-    ON_TEXT_CHANGED,
-    BEFORE_TEXT_CHANGED,
-    AFTER_TEXT_CHANGED,
+    ON_ITEM_SELECTED,
+    ON_NOTHING_SELECTED
   }
 }

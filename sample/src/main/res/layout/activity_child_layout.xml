@@ -14,4 +14,21 @@
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
       />
+  <CheckBox
+      android:id="@+id/checkbox_changed"
+      android:text="test onCheckChanged"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content" />
+
+  <CheckBox
+      android:id="@+id/checkbox_changed1"
+      android:text="test onCheckChanged one"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content" />
+
+  <CheckBox
+      android:id="@+id/checkbox_changed2"
+      android:text="test onCheckChanged two"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content" />
 </LinearLayout>

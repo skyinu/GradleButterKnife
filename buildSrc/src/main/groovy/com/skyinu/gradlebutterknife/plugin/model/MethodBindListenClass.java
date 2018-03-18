@@ -27,7 +27,52 @@ public enum MethodBindListenClass {
           new Parameter("java.lang.CharSequence", "var1"), new Parameter("int", "var2"),
           new Parameter("int", "var3"), new Parameter("int", "var4")),
       new MethodBindFuncModel("void", "afterTextChanged", "",
-          new Parameter("android.text.Editable", "var1")));
+          new Parameter("android.text.Editable", "var1"))),
+
+  OnCheckedChanged("android.widget.CompoundButton", "setOnCheckedChangeListener",
+      "android.widget.CompoundButton$OnCheckedChangeListener", false,
+      new MethodBindFuncModel("void", "onCheckedChanged", "",
+          new Parameter("android.widget.CompoundButton", "view"),
+          new Parameter("boolean", "var1"))),
+
+  OnEditorAction("android.widget.TextView", "setOnEditorActionListener",
+      "android.widget.TextView$OnEditorActionListener", false,
+      new MethodBindFuncModel("boolean", "onEditorAction", "false",
+          new Parameter("android.widget.TextView", "view"),
+          new Parameter("int", "var1"), new Parameter("android.view.KeyEvent", "var2"))),
+
+  OnFocusChange("android.view.View", "setOnFocusChangeListener",
+      "android.view.View$OnFocusChangeListener", false,
+      new MethodBindFuncModel("void", "onFocusChange", "",
+          new Parameter("android.view.View", "view"), new Parameter("boolean", "var1"))),
+
+  OnItemClick("android.widget.AdapterView", "setOnItemClickListener",
+      "android.widget.AdapterView$OnItemClickListener", false,
+      new MethodBindFuncModel("void", "onItemClick", "",
+          new Parameter("android.widget.AdapterView", "view"),
+          new Parameter("android.view.View", "var1"),
+          new Parameter("int", "var2"), new Parameter("long", "var3"))),
+
+  OnItemLongClick("android.widget.AdapterView", "setOnItemLongClickListener",
+                  "android.widget.AdapterView$OnItemLongClickListener", false,
+                  new MethodBindFuncModel("boolean", "onItemLongClick", "false",
+                  new Parameter("android.widget.AdapterView", "view"),
+          new Parameter("android.view.View", "var1"),
+          new Parameter("int", "var2"), new Parameter("long", "var3"))),
+
+  OnItemSelected("android.widget.AdapterView", "setOnItemSelectedListener",
+      "android.widget.AdapterView$OnItemSelectedListener", false,
+      new MethodBindFuncModel("void", "onItemSelected", "",
+          new Parameter("android.widget.AdapterView", "view"),
+          new Parameter("android.view.View", "var1"),
+          new Parameter("int", "var2"), new Parameter("long", "var3")),
+      new MethodBindFuncModel("void", "onNothingSelected", "",
+          new Parameter("android.widget.AdapterView", "view"))),
+
+  OnTouch("android.view.View", "setOnTouchListener","android.view.View$OnTouchListener", false,
+      new MethodBindFuncModel("boolean", "onTouch", "false",
+          new Parameter("android.view.View", "view"),
+          new Parameter("android.view.MotionEvent", "var1")));
 
   private final String aimClassType;
   private final String setMethod;
@@ -75,6 +120,9 @@ public enum MethodBindListenClass {
   }
 
   public String convertToTargetMethod(String key){
+    if(funcModelList.size() == 1){
+      return funcModelList.get(0).getName();
+    }
     key = key.replace("_", "");
     for (MethodBindFuncModel model : funcModelList) {
       if(model.getName().equalsIgnoreCase(key)){

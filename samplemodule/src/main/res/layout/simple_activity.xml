@@ -7,8 +7,16 @@
     android:padding="8dp">
   <ListView
       android:id="@+id/list_of_things"
+      android:background="#FF0"
       android:layout_width="match_parent"
-      android:layout_height="wrap_content"
+      android:layout_height="300dp"
+      android:layout_margin="10dp"
+      />
+  <ListView
+      android:id="@+id/list_of_things1"
+      android:background="#0F5"
+      android:layout_width="match_parent"
+      android:layout_height="200dp"
       android:layout_margin="10dp"
       />
 </LinearLayout>
