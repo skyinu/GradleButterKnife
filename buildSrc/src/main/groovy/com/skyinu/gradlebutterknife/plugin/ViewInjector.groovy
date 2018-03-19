@@ -4,6 +4,7 @@ package com.skyinu.gradlebutterknife.plugin
 import com.skyinu.gradlebutterknife.plugin.bind.FieldBinder
 import com.skyinu.gradlebutterknife.plugin.bind.MethodBinder
 import com.skyinu.gradlebutterknife.plugin.util.ClassUtils
+import com.skyinu.gradlebutterknife.plugin.util.Log
 import javassist.CtClass
 import javassist.CtMethod
 import javassist.CtNewMethod
@@ -47,19 +48,29 @@ public class ViewInjector {
         "${ConstantList.NAME_CLASS_RESOURCES} ${ConstantList.NAME_RESOURCE_FIELD}" + " = ${ConstantList.NAME_CONTEXT_FIELD}.getResources();\n"
     injectMethod += "android.view.View ${ConstantList.NAME_TEMP_VIEW};\n"
     idFieldMap.clear()
-    injectClass.addInterface(injectInterface)
+    if (injectClass.isFrozen()) {
+      injectClass.defrost()
+    }
+    if(!ClassUtils.containSpecficInterface(injectClass, injectInterface)) {
+      injectClass.addInterface(injectInterface)
+    }
   }
 
   def endInject(CtClass injectClass, String classPath) {
     injectMethod += "}"
+    Log.info("--------------------inject method src to target class-----------------------")
+    Log.info(injectMethod)
+    Log.info("--------------------inject method src to target class-----------------------")
     if (injectClass.isFrozen()) {
       injectClass.defrost()
     }
     CtMethod ctMethod = CtNewMethod.make(injectMethod, injectClass)
     if (ClassUtils.containSpecficMethod(injectClass, ctMethod)) {
-      injectClass.removeMethod(ctMethod)
+      CtMethod existMethod = injectClass.getDeclaredMethod(ctMethod.name, ctMethod.parameterTypes)
+      existMethod.setBody(ctMethod, null)
+    } else {
+      injectClass.addMethod(ctMethod)
     }
-    injectClass.addMethod(ctMethod)
     injectClass.writeFile(classPath)
     injectClass.detach()
   }

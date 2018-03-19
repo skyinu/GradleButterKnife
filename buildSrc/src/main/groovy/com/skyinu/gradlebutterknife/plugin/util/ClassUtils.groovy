@@ -12,7 +12,7 @@ public class ClassUtils {
   static boolean containSpecficInterface(CtClass sourceClass, CtClass desInterface) {
     def implInterfaces = sourceClass.getInterfaces()
     for (inter in implInterfaces) {
-      if (inter == desInterface) {
+      if (inter.name == desInterface.name) {
         return true
       }
     }

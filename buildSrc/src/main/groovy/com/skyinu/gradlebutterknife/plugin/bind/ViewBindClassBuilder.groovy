@@ -1,6 +1,7 @@
 package com.skyinu.gradlebutterknife.plugin.bind
 
 import com.skyinu.gradlebutterknife.plugin.ConstantList
+import com.skyinu.gradlebutterknife.plugin.util.Log
 import javassist.ClassPool
 import javassist.CtClass
 import javassist.CtConstructor
@@ -61,6 +62,9 @@ class ViewBindClassBuilder {
   }
 
   String addMethod(String methodSrc){
+    Log.info("--------------------inject method src to bind class-----------------------")
+    Log.info(methodSrc)
+    Log.info("--------------------inject method src to bind class-----------------------")
     CtMethod ctMethod = CtNewMethod.make(methodSrc, bindClass)
     bindClass.addMethod(ctMethod)
   }

@@ -73,6 +73,8 @@ public class MethodBindFuncModel {
   }
 
   public void fillCtMethod(String methodCallCode) {
-    methodBuildString.append(methodCallCode);
+    if(methodCallCode != null && !methodCallCode.isEmpty()) {
+      methodBuildString.append(methodCallCode);
+    }
   }
 }
