@@ -2,8 +2,6 @@ package com.skyinu.gradlebutterknife.sample;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.view.KeyEvent;
-import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -43,7 +41,7 @@ public class ChildActivity extends BaseActivity {
     childTitle.setText("child text " + System.currentTimeMillis());
   }
 
-  @OnTextChanged(value = R2.id.edit_text, callback = OnTextChanged.Callback.AFTER_TEXT_CHANGED)
+  @OnTextChanged(value = R2.id.edit_text, callback = OnTextChanged.AFTER_TEXT_CHANGED)
   public void afterText() {
     Toast.makeText(this, "changed", Toast.LENGTH_SHORT).show();
   }

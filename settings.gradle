@@ -1,2 +1,3 @@
-//include ':gradlebutterknife-annotations', ':gradlebutterknife'
+include ':gradlebutterknife-annotations'
+//, ':gradlebutterknife'
 include ':samplemodule', ':sample'

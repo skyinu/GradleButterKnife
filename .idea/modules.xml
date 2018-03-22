@@ -6,6 +6,7 @@
       <module fileurl="file://D:\software\androidCode\GradleButterKnife\gradlebutterknife-annotations\annotations.iml" filepath="D:\software\androidCode\GradleButterKnife\gradlebutterknife-annotations\annotations.iml" />
       <module fileurl="file://D:\software\androidCode\GradleButterKnife\app\app.iml" filepath="D:\software\androidCode\GradleButterKnife\app\app.iml" />
       <module fileurl="file://$PROJECT_DIR$/buildSrc/buildSrc.iml" filepath="$PROJECT_DIR$/buildSrc/buildSrc.iml" />
+      <module fileurl="file://$PROJECT_DIR$/gradlebutterknife-annotations/gradlebutterknife-annotations.iml" filepath="$PROJECT_DIR$/gradlebutterknife-annotations/gradlebutterknife-annotations.iml" />
       <module fileurl="file://$PROJECT_DIR$/sample/sample.iml" filepath="$PROJECT_DIR$/sample/sample.iml" />
       <module fileurl="file://$PROJECT_DIR$/samplemodule/samplemodule.iml" filepath="$PROJECT_DIR$/samplemodule/samplemodule.iml" />
     </modules>

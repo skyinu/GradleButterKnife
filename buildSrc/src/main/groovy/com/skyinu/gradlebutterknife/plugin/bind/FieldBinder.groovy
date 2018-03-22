@@ -45,7 +45,8 @@ class FieldBinder {
     if (!BindUtils.isAnnotationSupport(annotation)) {
       return ""
     }
-    if (annotation instanceof BindViews) {
+    def annoName = annotation.annotationType().name
+    if (annoName == BindViews.name) {
       return buildBindFieldsStatement(bindField, annotation, idFieldMap)
     }
     def value = annotation.value()
@@ -61,36 +62,36 @@ class FieldBinder {
       statement += "($injectType)"
     }
 
-    if (annotation instanceof BindView) {
+    if (annoName == BindView.name) {
       statement += "${ConstantList.VIEW_SOURCE}.findViewById($idString);\n"
       idFieldMap.put(value, fieldName)
       return statement
     }
-    if (annotation instanceof BindString) {
+    if (annoName == BindString.name) {
       statement += "${ConstantList.NAME_RESOURCE_FIELD}.getString($idString);\n"
       return statement
     }
-    if (annotation instanceof BindInt) {
+    if (annoName == BindInt.name) {
       statement += "${ConstantList.NAME_RESOURCE_FIELD}.getInteger($idString);\n"
       return statement
     }
-    if (annotation instanceof BindBool) {
+    if (annoName == BindBool.name) {
       statement += "${ConstantList.NAME_RESOURCE_FIELD}.getBoolean($idString);\n"
       return statement
     }
-    if (annotation instanceof BindColor) {
+    if (annoName == BindColor.name) {
       statement += "${ConstantList.NAME_RESOURCE_FIELD}.getColor($idString, null);\n"
       return statement
     }
-    if (annotation instanceof BindDimen) {
+    if (annoName == BindDimen.name) {
       statement += "${ConstantList.NAME_RESOURCE_FIELD}.getDimension($idString);\n"
       return statement
     }
-    if (annotation instanceof BindBitmap) {
+    if (annoName == BindBitmap.name) {
       statement += "${ConstantList.NAME_RESOURCE_FIELD}.getDrawable($idString);\n"
       return statement
     }
-    if (annotation instanceof BindAnim) {
+    if (annoName == BindAnim.name) {
       statement +=
           "${ConstantList.NAME_CLASS_ANIMATIONUTILS}" + ".loadAnimation(${ConstantList.NAME_CONTEXT_FIELD},$idString);\n"
       return statement

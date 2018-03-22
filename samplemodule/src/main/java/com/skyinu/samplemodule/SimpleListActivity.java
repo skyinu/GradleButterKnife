@@ -52,7 +52,7 @@ public class SimpleListActivity extends AppCompatActivity {
     return false;
   }
 
-  @OnItemSelected(value = {R2.id.list_of_things}, callback = OnItemSelected.Callback.ON_NOTHING_SELECTED)
+  @OnItemSelected(value = {R2.id.list_of_things}, callback = OnItemSelected.ON_NOTHING_SELECTED)
   public boolean handleItemNothingSelect(AdapterView<?> parent){
     Toast.makeText(this, "item nothing " + parent, Toast.LENGTH_SHORT).show();
     return false;

@@ -79,38 +79,36 @@ class MethodBinder {
       def viewFieldName = idFieldMap.get(value)
       def methodKey = null
       MethodBindListenClass listenClass = null
-      if(annotation instanceof OnClick){
+      if(annoName == OnClick.name){
         listenClass = MethodBindListenClass.OnClick
       }
-      else if(annotation instanceof OnLongClick){
+      else if(annoName == OnLongClick.name){
         listenClass = MethodBindListenClass.OnLongClick
       }
-      else if(annotation instanceof OnTextChanged){
-        OnTextChanged onTextChanged = annotation
+      else if(annoName == OnTextChanged.name){
         listenClass = MethodBindListenClass.OnTextChanged
-        methodKey = onTextChanged.callback().name()
+        methodKey = annotation.callback()
       }
-      else if(annotation instanceof OnCheckedChanged){
+      else if(annoName == OnCheckedChanged.name){
         listenClass = MethodBindListenClass.OnCheckedChanged
       }
-      else if(annotation instanceof OnEditorAction){
+      else if(annoName == OnEditorAction.name){
         listenClass = MethodBindListenClass.OnEditorAction
       }
-      else if(annotation instanceof OnFocusChange){
+      else if(annoName == OnFocusChange.name){
         listenClass = MethodBindListenClass.OnFocusChange
       }
-      else if(annotation instanceof OnItemClick){
+      else if(annoName == OnItemClick.name){
         listenClass = MethodBindListenClass.OnItemClick
       }
-      else if(annotation instanceof OnItemLongClick){
+      else if(annoName == OnItemLongClick.name){
         listenClass = MethodBindListenClass.OnItemLongClick
       }
-      else if(annotation instanceof OnItemSelected){
-        OnItemSelected onItemSelected = annotation
+      else if(annoName == OnItemSelected.name){
         listenClass = MethodBindListenClass.OnItemSelected
-        methodKey = onItemSelected.callback().name()
+        methodKey = annotation.callback()
       }
-      else if(annotation instanceof OnTouch){
+      else if(annoName == OnTouch.name){
         listenClass = MethodBindListenClass.OnTouch
       }
 

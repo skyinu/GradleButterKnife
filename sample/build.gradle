@@ -25,6 +25,7 @@ dependencies {
   implementation fileTree(dir: 'libs', include: ['*.jar'])
   implementation 'com.android.support:appcompat-v7:26.1.0'
   implementation project(':samplemodule')
-  implementation 'com.skyinu:gradlebutterknife-annotations:0.0.6'
+//  implementation 'com.skyinu:gradlebutterknife-annotations:0.0.6'
+  implementation project(":gradlebutterknife-annotations")
   implementation 'com.skyinu:gradlebutterknife:0.0.2'
 }

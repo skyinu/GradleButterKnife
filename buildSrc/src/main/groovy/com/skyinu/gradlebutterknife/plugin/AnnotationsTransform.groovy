@@ -8,7 +8,6 @@ import com.android.build.api.transform.TransformOutputProvider
 import com.android.build.gradle.LibraryPlugin
 import com.skyinu.gradlebutterknife.plugin.model.TargetClassInfo
 import com.skyinu.gradlebutterknife.plugin.util.BindUtils
-import javassist.ClassClassPath
 import javassist.ClassPath
 import javassist.ClassPool
 import javassist.CtClass
@@ -24,7 +23,7 @@ import org.gradle.api.tasks.compile.JavaCompile
 
 public class AnnotationsTransform extends Transform {
   Project project
-  ClassPool classPool = ClassPool.getDefault()
+  ClassPool classPool
   List<String> classPathList
   def collector = new StringIdCollector()
   Queue<TargetClassInfo> injectClassQueue
@@ -62,6 +61,9 @@ public class AnnotationsTransform extends Transform {
   void transform(TransformInvocation transformInvocation)
       throws TransformException, InterruptedException, IOException {
     super.transform(transformInvocation)
+    TransformOutputProvider outputProvider = transformInvocation.outputProvider
+    outputProvider.deleteAll()
+    classPool = new ClassPool(true)
     collectClassPath()
     classPool.insertClassPath(project.android.bootClasspath[0].toString())
     List<ClassPath> classPaths = new ArrayList<>()
@@ -71,21 +73,19 @@ public class AnnotationsTransform extends Transform {
       } catch (Exception e) {
       }
     }
-    TransformOutputProvider outputProvider = transformInvocation.outputProvider
-    if (transformInvocation.isIncremental()) {
-      outputProvider.deleteAll()
-    }
     transformInvocation.inputs.each {
       it.jarInputs.each {
         File out = outputProvider.getContentLocation(it.name, it.contentTypes, it.scopes,
             Format.JAR)
         FileUtils.copyFile(it.file, out)
+        classPathList.add(out.path)
         classPaths.add(classPool.appendClassPath(out.path))
       }
       it.directoryInputs.each {
         File out = outputProvider.getContentLocation(it.name, it.contentTypes, it.scopes,
             Format.DIRECTORY)
         FileUtils.copyDirectory(it.file, out)
+        classPathList.add(out.path)
         classPaths.add(classPool.insertClassPath(out.path))
         handleDirectory(out)
       }
