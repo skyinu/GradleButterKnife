@@ -12,13 +12,10 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.CLASS)
 public @interface OnTextChanged {
+  String ON_TEXT_CHANGED = "ON_TEXT_CHANGED";
+  String BEFORE_TEXT_CHANGED = "BEFORE_TEXT_CHANGED";
+  String AFTER_TEXT_CHANGED = "AFTER_TEXT_CHANGED";
   @IdRes int[] value();
 
-  Callback callback() default Callback.ON_TEXT_CHANGED;
-
-  enum Callback {
-    ON_TEXT_CHANGED,
-    BEFORE_TEXT_CHANGED,
-    AFTER_TEXT_CHANGED,
-  }
+  String callback() default ON_TEXT_CHANGED;
 }

@@ -14,11 +14,8 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.CLASS)
 @Target(ElementType.METHOD)
 public @interface OnItemSelected {
+  String ON_ITEM_SELECTED = "ON_ITEM_SELECTED";
+  String  ON_NOTHING_SELECTED = "ON_NOTHING_SELECTED";
   @IdRes int[] value() default { View.NO_ID };
-  Callback callback() default Callback.ON_ITEM_SELECTED;
-
-  enum Callback {
-    ON_ITEM_SELECTED,
-    ON_NOTHING_SELECTED
-  }
+  String callback() default ON_ITEM_SELECTED;
 }
