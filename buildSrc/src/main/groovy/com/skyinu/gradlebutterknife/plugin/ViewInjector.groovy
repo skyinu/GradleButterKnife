@@ -36,6 +36,7 @@ public class ViewInjector {
   }
 
   def startInject(CtClass injectClass) {
+    Log.info("start handle class ${injectClass.name}" )
     injectMethod =
         "public void ${ConstantList.NAME_INJECT_METHOD}" + "(android.view.View ${ConstantList.VIEW_SOURCE}){\n"
     def injectInterface = injectClass.classPool.get(ConstantList.NAME_FLAG_INTERFACE)
@@ -58,9 +59,9 @@ public class ViewInjector {
 
   def endInject(CtClass injectClass, String classPath) {
     injectMethod += "}"
-    Log.info("--------------------inject method src to target class-----------------------")
+    Log.info("--------------------inject method src to target class ${injectClass.name}-----------------------")
     Log.info(injectMethod)
-    Log.info("--------------------inject method src to target class-----------------------")
+    Log.info("--------------------inject method src to target class ${injectClass.name}-----------------------")
     if (injectClass.isFrozen()) {
       injectClass.defrost()
     }

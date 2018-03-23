@@ -63,7 +63,12 @@ public class AnnotationsTransform extends Transform {
     super.transform(transformInvocation)
     TransformOutputProvider outputProvider = transformInvocation.outputProvider
     outputProvider.deleteAll()
+    def config = project.extensions.findByName(GradleButterKnifeExtension.DSL_DOMAIN_NAME)
+    config = config as GradleButterKnifeExtension
     classPool = new ClassPool(true)
+    if(config?.dumpAble && config?.dumpDir != null && !config?.dumpDir?.isEmpty()){
+        CtClass.debugDump = config.dumpDir.trim()
+    }
     collectClassPath()
     classPool.insertClassPath(project.android.bootClasspath[0].toString())
     List<ClassPath> classPaths = new ArrayList<>()
@@ -103,6 +108,7 @@ public class AnnotationsTransform extends Transform {
       classPaths.each {
         classPool.removeClassPath(it)
       }
+      CtClass.debugDump = null
     }
   }
 
@@ -131,7 +137,6 @@ public class AnnotationsTransform extends Transform {
       if (BindUtils.shouldBindView(ctClass)) {
         TargetClassInfo model = new TargetClassInfo(ctClass, input.absolutePath)
         injectClassQueue.add(model)
-        injectClassQueue.contains()
       }
     }
   }

@@ -12,10 +12,10 @@ import com.skyinu.annotations.BindViews
 import com.skyinu.gradlebutterknife.plugin.ConstantList
 import com.skyinu.gradlebutterknife.plugin.util.BindUtils
 import com.skyinu.gradlebutterknife.plugin.util.ClassUtils
+import com.skyinu.gradlebutterknife.plugin.util.Log
 import javassist.CtClass
 import javassist.CtField
-
-import java.lang.annotation.Annotation;
+import java.lang.annotation.Annotation
 
 /**
  * Created by chen on 2018/3/13.
@@ -46,6 +46,7 @@ class FieldBinder {
       return ""
     }
     def annoName = annotation.annotationType().name
+    Log.info("start handle field ${bindField.name} annotation ${annoName}")
     if (annoName == BindViews.name) {
       return buildBindFieldsStatement(bindField, annotation, idFieldMap)
     }

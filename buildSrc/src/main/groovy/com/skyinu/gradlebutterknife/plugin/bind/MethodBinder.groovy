@@ -17,6 +17,7 @@ import com.skyinu.gradlebutterknife.plugin.model.MethodViewBind
 import com.skyinu.gradlebutterknife.plugin.model.Parameter
 import com.skyinu.gradlebutterknife.plugin.util.BindUtils
 import com.skyinu.gradlebutterknife.plugin.util.ClassUtils
+import com.skyinu.gradlebutterknife.plugin.util.Log
 import javassist.CtClass
 import javassist.CtMethod
 
@@ -68,6 +69,7 @@ class MethodBinder {
 
   def collectMethodBindInfo(CtMethod targetMethod, Annotation annotation){
     String annoName = annotation.annotationType().name
+    Log.info("start collect info about method ${targetMethod.name} annotation ${annoName}")
     List<MethodViewBind> viewBindList = methodBindInfoList.get(annoName)
     if(!viewBindList){
       viewBindList = new ArrayList<>()

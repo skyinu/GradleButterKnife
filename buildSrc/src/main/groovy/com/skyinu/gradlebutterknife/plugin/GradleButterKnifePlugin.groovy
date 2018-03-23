@@ -18,6 +18,7 @@ class GradleButterKnifePlugin implements Plugin<Project> {
       throw new IllegalStateException('plugin can only be applied to android projects')
     }
     this.projectContext = project
+    project.extensions.create(GradleButterKnifeExtension.DSL_DOMAIN_NAME, GradleButterKnifeExtension)
     Log.init(project)
     registerResourceProcess(project)
     project.android.registerTransform(new AnnotationsTransform(project))
