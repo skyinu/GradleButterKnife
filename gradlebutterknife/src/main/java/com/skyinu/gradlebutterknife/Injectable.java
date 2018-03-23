@@ -7,5 +7,5 @@ import android.view.View;
  */
 
 public interface Injectable {
-    void inject(View source);
+    void _inject_(View source);
 }

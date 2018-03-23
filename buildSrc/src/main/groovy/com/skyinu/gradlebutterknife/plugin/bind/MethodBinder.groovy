@@ -126,24 +126,14 @@ class MethodBinder {
   }
 
   def processMethodBindInfo(){
+    def listenerInstanceExist = false
     methodBindInfoList.keySet().each {
       String key = it
       List<MethodViewBind> viewBindList = methodBindInfoList.get(key)
       //TODO convert data
       MethodBindListenClass listenClass = null
       ViewBindClassBuilder classBuilder = null
-      if(key == OnClick.name){
-        listenClass = MethodBindListenClass.OnClick
-        classBuilder = ensureBindClassExist()
-        realProcessMethodBindInfo(listenClass, classBuilder, viewBindList)
-
-      }
-      else if(key == OnLongClick.name){
-        listenClass = MethodBindListenClass.OnLongClick
-        classBuilder = ensureBindClassExist()
-        realProcessMethodBindInfo(listenClass, classBuilder, viewBindList)
-      }
-      else if(key == OnTextChanged.name){
+      if(key == OnTextChanged.name){
         listenClass = MethodBindListenClass.OnTextChanged
         Map<String, List<MethodViewBind>> groupBindMap = viewBindList.groupBy {
           it.viewId
@@ -151,63 +141,65 @@ class MethodBinder {
         groupBindMap.keySet().each {
           def bindList = groupBindMap.get(it)
           ViewBindClassBuilder builder = new ViewBindClassBuilder(classPath,
-              targetClass, ConstantList.NAME_CLASS_EVENT_DISPATCHER + generateClassCount)
+                  targetClass, ConstantList.NAME_CLASS_EVENT_DISPATCHER + generateClassCount)
           generateClassCount++
-          realProcessMethodBindInfo(listenClass, builder, bindList)
+          realProcessMethodBindInfo(listenClass, builder, bindList, false)
           builder.build()
         }
+        return
+      }
+
+      if(key == OnItemSelected.name){
+        listenClass = MethodBindListenClass.OnItemSelected
+      }
+      else if(key == OnClick.name){
+        listenClass = MethodBindListenClass.OnClick
+      }
+      else if(key == OnLongClick.name){
+        listenClass = MethodBindListenClass.OnLongClick
       }
       else if(key == OnCheckedChanged.name){
         listenClass = MethodBindListenClass.OnCheckedChanged
-        classBuilder = ensureBindClassExist()
-        realProcessMethodBindInfo(listenClass, classBuilder, viewBindList)
       }
       else if(key == OnEditorAction.name){
         listenClass = MethodBindListenClass.OnEditorAction
-        classBuilder = ensureBindClassExist()
-        realProcessMethodBindInfo(listenClass, classBuilder, viewBindList)
       }
       else if(key == OnFocusChange.name){
         listenClass = MethodBindListenClass.OnFocusChange
-        classBuilder = ensureBindClassExist()
-        realProcessMethodBindInfo(listenClass, classBuilder, viewBindList)
       }
       else if(key == OnItemClick.name){
         listenClass = MethodBindListenClass.OnItemClick
-        classBuilder = ensureBindClassExist()
-        realProcessMethodBindInfo(listenClass, classBuilder, viewBindList)
       }
       else if(key == OnItemLongClick.name){
         listenClass = MethodBindListenClass.OnItemLongClick
-        classBuilder = ensureBindClassExist()
-        realProcessMethodBindInfo(listenClass, classBuilder, viewBindList)
-      }
-      else if(key == OnItemSelected.name){
-        listenClass = MethodBindListenClass.OnItemSelected
-        classBuilder = ensureBindClassExist()
-        realProcessMethodBindInfo(listenClass, classBuilder, viewBindList)
       }
       else if(key == OnTouch.name){
         listenClass = MethodBindListenClass.OnTouch
-        classBuilder = ensureBindClassExist()
-        realProcessMethodBindInfo(listenClass, classBuilder, viewBindList)
       }
-
-
+      classBuilder = ensureBindClassExist()
+      if(!listenerInstanceExist){
+        def fullClassName = classBuilder.fullName
+        buildMethodSrc += "$fullClassName ${ConstantList.NAME_LISTENER_INSTANCE};\n"
+        buildMethodSrc += "${ConstantList.NAME_LISTENER_INSTANCE} = new ${fullClassName}(this);\n"
+      }
+      realProcessMethodBindInfo(listenClass, classBuilder, viewBindList, true)
+      listenerInstanceExist = true
     }
     if(commonBindClassBuilder != null){
       commonBindClassBuilder.build()
-
     }
   }
 
   def realProcessMethodBindInfo(MethodBindListenClass listenClass, ViewBindClassBuilder classBuilder,
-                                List<MethodViewBind> viewBindList){
+                                List<MethodViewBind> viewBindList, boolean useListenInstance){
     // 构造class 类
-
+    def fullClassName = null
+    if(!useListenInstance){
+      fullClassName = classBuilder.fullName
+    }
     fillClass(listenClass, classBuilder)
     viewBindList.each {
-      buildMethodSrc += buildSetCodeBlock(listenClass, it, classBuilder.fullName)
+      buildMethodSrc += buildSetCodeBlock(listenClass, it, fullClassName)
 
       buildMethodCallCodeBlock(listenClass, it)
     }
@@ -274,9 +266,13 @@ class MethodBinder {
     else{
       code += "= (${viewBind.viewClassType})${viewBind.viewFieldName};\n"
     }
+    def listener = ConstantList.NAME_LISTENER_INSTANCE
+    if(listenerName != null && !listenerName.isEmpty()){
+      listener = "new $listenerName(this)"
+    }
     //step 2: set listener
     code += "((${viewBind.viewClassType})${ConstantList.NAME_TEMP_VIEW})" +
-        ".${listenClass.setMethod}(new $listenerName(this));\n"
+        ".${listenClass.setMethod}($listener);\n"
     return code
   }
 
