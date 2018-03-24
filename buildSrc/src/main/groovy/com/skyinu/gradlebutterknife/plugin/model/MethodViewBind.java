@@ -10,7 +10,6 @@ import javassist.CtClass;
  */
 
 public class MethodViewBind {
-  //设置监听的信息
   private String targetMethodName;
   private String bindMethodName;
   private String viewFieldName;

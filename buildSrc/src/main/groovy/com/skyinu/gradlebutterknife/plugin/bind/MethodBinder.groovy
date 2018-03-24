@@ -128,11 +128,10 @@ class MethodBinder {
   def processMethodBindInfo(){
     def listenerInstanceExist = false
     methodBindInfoList.keySet().each {
-      String key = it
+      String key = it//key is annotation's name
       List<MethodViewBind> viewBindList = methodBindInfoList.get(key)
-      //TODO convert data
       MethodBindListenClass listenClass = null
-      ViewBindClassBuilder classBuilder = null
+      ViewBindClassBuilder classBuilder
       if(key == OnTextChanged.name){
         listenClass = MethodBindListenClass.OnTextChanged
         Map<String, List<MethodViewBind>> groupBindMap = viewBindList.groupBy {
@@ -143,7 +142,7 @@ class MethodBinder {
           ViewBindClassBuilder builder = new ViewBindClassBuilder(classPath,
                   targetClass, ConstantList.NAME_CLASS_EVENT_DISPATCHER + generateClassCount)
           generateClassCount++
-          realProcessMethodBindInfo(listenClass, builder, bindList, false)
+          realProcessMethodBindInfo(listenClass, builder, bindList, false, true)
           builder.build()
         }
         return
@@ -191,17 +190,24 @@ class MethodBinder {
   }
 
   def realProcessMethodBindInfo(MethodBindListenClass listenClass, ViewBindClassBuilder classBuilder,
-                                List<MethodViewBind> viewBindList, boolean useListenInstance){
-    // 构造class 类
+                                List<MethodViewBind> viewBindList, boolean useListenInstance = false,
+                                boolean setListenerOnce = false){
     def fullClassName = null
     if(!useListenInstance){
       fullClassName = classBuilder.fullName
     }
     fillClass(listenClass, classBuilder)
-    viewBindList.each {
-      buildMethodSrc += buildSetCodeBlock(listenClass, it, fullClassName)
-
-      buildMethodCallCodeBlock(listenClass, it)
+    if(setListenerOnce){
+      buildMethodSrc += buildSetCodeBlock(listenClass, viewBindList.get(0), fullClassName)
+      viewBindList.each {
+        buildMethodCallCodeBlock(listenClass, it)
+      }
+    }
+    else {
+      viewBindList.each {
+        buildMethodSrc += buildSetCodeBlock(listenClass, it, fullClassName)
+        buildMethodCallCodeBlock(listenClass, it)
+      }
     }
     endInject(listenClass, classBuilder)
   }

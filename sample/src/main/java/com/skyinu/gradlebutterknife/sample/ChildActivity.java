@@ -36,9 +36,9 @@ public class ChildActivity extends BaseActivity {
     Toast.makeText(this, "actionId is = " + actionId, Toast.LENGTH_SHORT).show();
     return true;
   }
-  @OnTextChanged(R2.id.edit_text)
-  public void onTextChanged() {
-    childTitle.setText("child text " + System.currentTimeMillis());
+  @OnTextChanged({R2.id.edit_text,R2.id.edit_text1})
+  public void onTextChanged(CharSequence var1) {
+    childTitle.setText("child text " + var1);
   }
 
   @OnTextChanged(value = R2.id.edit_text, callback = OnTextChanged.AFTER_TEXT_CHANGED)
