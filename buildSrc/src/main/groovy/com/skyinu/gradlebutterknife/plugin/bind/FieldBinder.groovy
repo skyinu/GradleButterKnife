@@ -18,18 +18,18 @@ import javassist.CtField
 import java.lang.annotation.Annotation
 
 /**
- * Created by chen on 2018/3/13.
- */
+ * Created by chen on 2018/3/13.*/
 
 class FieldBinder {
   private Map<Integer, String> idStringMap
+  private boolean hasInjectNullCheck
 
   FieldBinder(Map<Integer, String> idStringMap) {
     this.idStringMap = idStringMap
   }
 
-
-  def processBindField(CtClass targetClass, String bindMethodSrc, Map<Integer, String> idFieldMap){
+  def processBindField(CtClass targetClass, String bindMethodSrc, Map<Integer, String> idFieldMap) {
+    hasInjectNullCheck = false
     targetClass.declaredFields.each {
       CtField ctField = it
       ctField.annotations.each {
@@ -41,14 +41,14 @@ class FieldBinder {
   }
 
   String buildBindFieldStatement(CtField bindField, Annotation annotation,
-                                 Map<Integer, String> idFieldMap) {
+      Map<Integer, String> idFieldMap) {
     if (!BindUtils.isAnnotationSupport(annotation)) {
       return ""
     }
     def annoName = annotation.annotationType().name
     Log.info("start handle field ${bindField.name} annotation ${annoName}")
     if (annoName == BindViews.name) {
-      return buildBindFieldsStatement(bindField, annotation, idFieldMap)
+      return buildBindFieldsStatement(bindField, annotation)
     }
     def value = annotation.value()
     def idString = idStringMap.get(value)
@@ -66,6 +66,7 @@ class FieldBinder {
     if (annoName == BindView.name) {
       statement += "${ConstantList.VIEW_SOURCE}.findViewById($idString);\n"
       idFieldMap.put(value, fieldName)
+      statement += insertNullCheck(fieldName)
       return statement
     }
     if (annoName == BindString.name) {
@@ -99,8 +100,7 @@ class FieldBinder {
     }
   }
 
-  String buildBindFieldsStatement(CtField injectField, Annotation annotation,
-                                  Map<Integer, String> idFieldMap) {
+  String buildBindFieldsStatement(CtField injectField, Annotation annotation) {
     def values = annotation.value()
     def idStrings = new ArrayList<String>()
     for (id in values) {
@@ -122,11 +122,21 @@ class FieldBinder {
       if (isArray) {
         statement +=
             "${fieldName}[$i] = ${ConstantList.VIEW_SOURCE}.findViewById(${idStrings.get(i)});\n"
+        statement += insertNullCheck("${fieldName}[$i]")
       } else {
         statement +=
             "${fieldName}.add(${ConstantList.VIEW_SOURCE}.findViewById(${idStrings.get(i)}));\n"
+        statement += insertNullCheck("${fieldName}.get($i)")
       }
     }
     return statement
+  }
+
+  private def insertNullCheck(field) {
+    if (hasInjectNullCheck) {
+      return ""
+    }
+    hasInjectNullCheck = true
+    return "if($field == null) return;"
   }
 }
