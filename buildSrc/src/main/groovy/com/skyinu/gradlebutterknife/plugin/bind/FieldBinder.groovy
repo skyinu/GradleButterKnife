@@ -15,6 +15,7 @@ import com.skyinu.gradlebutterknife.plugin.util.ClassUtils
 import com.skyinu.gradlebutterknife.plugin.util.Log
 import javassist.CtClass
 import javassist.CtField
+import javassist.bytecode.AnnotationsAttribute
 import java.lang.annotation.Annotation
 
 /**
@@ -32,8 +33,13 @@ class FieldBinder {
     hasInjectNullCheck = false
     targetClass.declaredFields.each {
       CtField ctField = it
+      AnnotationsAttribute annotationsAttr = ctField.fieldInfo2.getAttribute(AnnotationsAttribute.invisibleTag)
       ctField.annotations.each {
-        bindMethodSrc += buildBindFieldStatement(ctField, it as Annotation, idFieldMap)
+        Annotation annotation = it as Annotation
+        if (BindUtils.isAnnotationSupport(annotation)) {
+          bindMethodSrc += buildBindFieldStatement(ctField, it as Annotation, idFieldMap)
+          annotationsAttr.removeAnnotation(annotation.annotationType().name)
+        }
       }
     }
 
@@ -42,9 +48,6 @@ class FieldBinder {
 
   String buildBindFieldStatement(CtField bindField, Annotation annotation,
       Map<Integer, String> idFieldMap) {
-    if (!BindUtils.isAnnotationSupport(annotation)) {
-      return ""
-    }
     def annoName = annotation.annotationType().name
     Log.info("start handle field ${bindField.name} annotation ${annoName}")
     if (annoName == BindViews.name) {

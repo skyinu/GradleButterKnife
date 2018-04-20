@@ -20,7 +20,7 @@ ButterKnife的实现方式是使用annotation processer在编译的过程中处�
 1.在项目根目录下的``build.gradle``中添加gradle插件的依赖
 
 ```
-classpath 'com.skyinu:gradlebutterknife-plugin:0.1.1'
+classpath 'com.skyinu:gradlebutterknife-plugin:0.1.2'
 ```
 
 2.在app或者library工程中引入gradlebutterknife-annotations,gradlebutterknife依赖

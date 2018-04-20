@@ -20,6 +20,7 @@ import com.skyinu.gradlebutterknife.plugin.util.ClassUtils
 import com.skyinu.gradlebutterknife.plugin.util.Log
 import javassist.CtClass
 import javassist.CtMethod
+import javassist.bytecode.AnnotationsAttribute
 
 import java.lang.annotation.Annotation
 
@@ -52,12 +53,14 @@ class MethodBinder {
     generateClassCount = 0
     targetClass.declaredMethods.each {
       CtMethod targetMethod = it
+      AnnotationsAttribute annotationsAttr = targetMethod.methodInfo2.getAttribute(AnnotationsAttribute.invisibleTag)
       targetMethod.annotations.each {
         Annotation annotation = it
         if (!BindUtils.isAnnotationSupport(annotation)) {
           return
         }
         collectMethodBindInfo(targetMethod, annotation)
+        annotationsAttr.removeAnnotation(annotation.annotationType().name)
       }
     }
     if(methodBindInfoList.keySet().empty){
