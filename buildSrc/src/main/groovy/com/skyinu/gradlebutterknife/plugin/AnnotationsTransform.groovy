@@ -97,7 +97,7 @@ public class AnnotationsTransform extends Transform {
     }
 
     try {
-      injector = new ViewInjector(collector.idStringMap)
+      injector = new ViewInjector(collector.idStringMap, config)
       injectClassQueue.each {
         inject(it.injectClass, it.classFilePath)
       }

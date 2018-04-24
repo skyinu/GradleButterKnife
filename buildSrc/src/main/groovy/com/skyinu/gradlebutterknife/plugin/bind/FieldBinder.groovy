@@ -24,9 +24,11 @@ import java.lang.annotation.Annotation
 class FieldBinder {
   private Map<Integer, String> idStringMap
   private boolean hasInjectNullCheck
+  private boolean shouldRemoveAnnotation
 
-  FieldBinder(Map<Integer, String> idStringMap) {
+  FieldBinder(Map<Integer, String> idStringMap, boolean removeAnno) {
     this.idStringMap = idStringMap
+    this.shouldRemoveAnnotation = removeAnno
   }
 
   def processBindField(CtClass targetClass, String bindMethodSrc, Map<Integer, String> idFieldMap) {
@@ -38,7 +40,9 @@ class FieldBinder {
         Annotation annotation = it as Annotation
         if (BindUtils.isAnnotationSupport(annotation)) {
           bindMethodSrc += buildBindFieldStatement(ctField, it as Annotation, idFieldMap)
-          annotationsAttr.removeAnnotation(annotation.annotationType().name)
+          if(shouldRemoveAnnotation) {
+            annotationsAttr.removeAnnotation(annotation.annotationType().name)
+          }
         }
       }
     }

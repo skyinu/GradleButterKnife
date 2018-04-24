@@ -7,6 +7,7 @@ package com.skyinu.gradlebutterknife.plugin
 class GradleButterKnifeExtension {
     public static final String DSL_DOMAIN_NAME = "GradleButterKnife"
     boolean dumpAble = false
+    boolean removeAnnotation = false
     String dumpDir
 
 }

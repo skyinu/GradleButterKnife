@@ -36,10 +36,12 @@ class MethodBinder {
   private Map<Integer, String> idFieldMap
   private Map<String, List<MethodViewBind>> methodBindInfoList
   private int generateClassCount
+  private boolean shouldRemoveAnnotation
 
-  MethodBinder(Map<Integer, String> idStringMap, int generateClassCount) {
+
+  MethodBinder(Map<Integer, String> idStringMap, boolean  removeAnno) {
     this.idStringMap = idStringMap
-    this.generateClassCount = generateClassCount
+    this.shouldRemoveAnnotation = removeAnno
   }
 
   def processBindMethod(CtClass targetClass, String classPath, String buildMethodSrc,
@@ -60,7 +62,9 @@ class MethodBinder {
           return
         }
         collectMethodBindInfo(targetMethod, annotation)
-        annotationsAttr.removeAnnotation(annotation.annotationType().name)
+        if(shouldRemoveAnnotation) {
+          annotationsAttr.removeAnnotation(annotation.annotationType().name)
+        }
       }
     }
     if(methodBindInfoList.keySet().empty){

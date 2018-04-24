@@ -24,6 +24,7 @@ android {
 GradleButterKnife {
   dumpAble true
   dumpDir "${project.buildDir}${File.separator}dumpDir"
+  removeAnnotation false
 }
 
 dependencies {

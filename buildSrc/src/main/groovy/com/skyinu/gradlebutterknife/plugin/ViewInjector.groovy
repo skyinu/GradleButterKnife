@@ -15,16 +15,17 @@ import javassist.CtNewMethod
 public class ViewInjector {
 
   def injectMethod
+  GradleButterKnifeExtension knifeExtension
   Map<Integer, String> idStringMap
   Map<Integer, String> idFieldMap
   FieldBinder fieldBinder
   MethodBinder methodBinder
-  int generateClassCount
 
-  ViewInjector(Map<Integer, String> idStringMap) {
+  ViewInjector(Map<Integer, String> idStringMap, GradleButterKnifeExtension knifeExtension) {
     this.idStringMap = idStringMap
-    fieldBinder = new FieldBinder(idStringMap)
-    methodBinder = new MethodBinder(idStringMap, generateClassCount)
+    this.knifeExtension = knifeExtension
+    fieldBinder = new FieldBinder(idStringMap, knifeExtension.removeAnnotation)
+    methodBinder = new MethodBinder(idStringMap, knifeExtension.removeAnnotation)
     idFieldMap = new HashMap<>()
   }
 
