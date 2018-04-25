@@ -69,20 +69,25 @@ public class AnnotationsTransform extends Transform {
     if(config?.dumpAble && config?.dumpDir != null && !config?.dumpDir?.isEmpty()){
         CtClass.debugDump = config.dumpDir.trim()
     }
+    def inputs = new File(project.buildDir.absolutePath, "inputs_log.txt")
+    inputs << "compile task's input:\n-----------------------------------------\n"
     collectClassPath()
     classPool.insertClassPath(project.android.bootClasspath[0].toString())
     List<ClassPath> classPaths = new ArrayList<>()
     classPathList.each {
       try {
+        inputs << it << "\n"
         classPaths.add(classPool.insertClassPath(it))
       } catch (Exception e) {
       }
     }
+    inputs << "transform task inputs:\n------------------------------------------\n"
     transformInvocation.inputs.each {
       it.jarInputs.each {
         File out = outputProvider.getContentLocation(it.name, it.contentTypes, it.scopes,
             Format.JAR)
         FileUtils.copyFile(it.file, out)
+        inputs << out.path << "\n"
         classPathList.add(out.path)
         classPaths.add(classPool.appendClassPath(out.path))
       }
@@ -90,6 +95,7 @@ public class AnnotationsTransform extends Transform {
         File out = outputProvider.getContentLocation(it.name, it.contentTypes, it.scopes,
             Format.DIRECTORY)
         FileUtils.copyDirectory(it.file, out)
+        inputs << out.path << "\n"
         classPathList.add(out.path)
         classPaths.add(classPool.insertClassPath(out.path))
         handleDirectory(out)
